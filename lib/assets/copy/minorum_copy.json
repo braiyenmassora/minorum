@@ -40,7 +40,7 @@
     "clear_all_cancel": "Cancel",
     "empty": "Nothing here. Yet.",
     "search_placeholder": "Search chats",
-    "no_search_results": "Nothing matches that. Try different words?",
+    "no_search_results": "Nothing matches that.",
     "pinned_section": "Pinned",
     "pin": "Pin chat",
     "unpin": "Unpin chat",

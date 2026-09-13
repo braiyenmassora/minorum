@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Eraser, LogOut, Pin, PinOff, Plus, Search, Trash2 } from "lucide-react";
+import { Eraser, LogOut, Pin, PinOff, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AppLogo } from "@/components/ui/app-logo";
@@ -198,16 +198,12 @@ export function ChatHistorySidebar({
 
       {sessions.length > 0 ? (
         <div className="relative px-sidebar pt-[var(--spacing-sm)]">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-[calc(var(--spacing-sm)+var(--spacing-lg))] size-3.5 -translate-y-1/2 text-text-muted"
-            aria-hidden
-          />
           <input
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={copy.search_placeholder}
-            className="w-full rounded-token-sm border border-border-subtle bg-transparent py-1.5 pr-2 pl-7 text-token-body-medium text-text-primary placeholder:text-text-muted focus:outline-none focus-visible:border-focus-ring"
+            className="w-full rounded-token-sm border border-border-subtle bg-transparent py-1.5 px-2 text-token-body-medium text-text-primary placeholder:text-text-muted focus:outline-none focus-visible:border-focus-ring"
             aria-label={copy.search_placeholder}
           />
         </div>
