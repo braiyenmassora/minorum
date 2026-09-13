@@ -40,7 +40,7 @@ import {
   getModelDisplayName,
   resolveModelSelection,
 } from "@/lib/core/config/model-label";
-import { messageForApiError } from "@/lib/core/copy/api-error-message";
+import { toastMessageForApiError } from "@/lib/core/copy/api-error-message";
 import { getAppCopy } from "@/lib/core/copy/app-copy";
 import type { ChatSession } from "@/lib/models/chat-session";
 import type { Message } from "@/lib/models/message";
@@ -497,7 +497,7 @@ export function ChatScreen({
 
         const apiError = toChatApiError(error);
         if (apiError.kind !== "cancelled") {
-          setErrorMessage(messageForApiError(apiError.kind));
+          setErrorMessage(toastMessageForApiError(apiError.kind));
         }
 
         setMessages((current) => {

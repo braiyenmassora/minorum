@@ -6,22 +6,22 @@
   "setup_screen": {
     "title": "Minorum",
     "subtitle": "Answers fast. Judges your code a little.",
-    "connection_section": "Koneksi API",
-    "profile_section": "Profil",
+    "connection_section": "API connection",
+    "profile_section": "Profile",
     "full_name_label": "Full name",
-    "full_name_hint": "Nama lengkap",
+    "full_name_hint": "Your full name",
     "api_url_label": "API URL",
     "api_url_hint": "https://api.example.com",
     "api_key_label": "API Key",
     "api_key_hint": "sk-...",
     "model_label": "Model",
     "model_hint": "Select or type a model name",
-    "test_connection": "Tes koneksi",
-    "test_connection_success": "Koneksi oke!",
-    "save": "Mulai chat",
-    "show_api_key": "Tampilkan",
-    "hide_api_key": "Sembunyikan",
-    "cancel": "Batal"
+    "test_connection": "Test connection",
+    "test_connection_success": "Connection OK!",
+    "save": "Start chat",
+    "show_api_key": "Show",
+    "hide_api_key": "Hide",
+    "cancel": "Cancel"
   },
   "chat_screen_input_header": {
     "model_prefix": "Model:",
@@ -36,8 +36,8 @@
     "new_chat": "New chat",
     "clear_all": "Clear all chats",
     "clear_all_confirm_body": "Every message here, gone for good. Your API config isn't touched.",
-    "clear_all_confirm": "Hapus semua",
-    "clear_all_cancel": "Batal",
+    "clear_all_confirm": "Delete all",
+    "clear_all_cancel": "Cancel",
     "empty": "Nothing here. Yet.",
     "search_placeholder": "Search chats",
     "no_search_results": "Nothing matches that. Try different words?",
@@ -46,8 +46,8 @@
     "unpin": "Unpin chat",
     "delete": "Delete",
     "close": "Close",
-    "account": "Profil",
-    "manage_setup": "Ubah setup"
+    "account": "Profile",
+    "manage_setup": "Edit setup"
   },
   "system_status": {
     "checking": "Checking…"
@@ -55,14 +55,14 @@
   "chat_bubble": {
     "read_more": "Read more",
     "show_less": "Show less",
-    "copy": "Salin",
+    "copy": "Copy",
     "retry": "Retry"
   },
   "chat_screen_reset_bottom_sheet": {
     "title": "Reset chat?",
     "body": "Every message here, gone. Your API config isn't touched.",
     "confirm": "Reset",
-    "cancel": "Batal"
+    "cancel": "Cancel"
   },
   "pilih_model_bottom_sheet": {
     "title": "Select model",
@@ -72,18 +72,25 @@
     "close": "Close"
   },
   "upload_gambar_bottom_sheet": {
-    "title": "Lampirkan gambar",
-    "from_gallery": "Dari galeri",
-    "cancel": "Batal"
+    "title": "Attach image",
+    "from_gallery": "From gallery",
+    "cancel": "Cancel"
   },
   "error_and_snackbar_messages": {
-    "auth": "API key/URL salah",
-    "network": "Koneksi putus",
-    "server": "Server rewel",
-    "timeout": "Kelamaan nunggu",
-    "unknown": "Ada yang salah",
-    "config_incomplete": "Lengkapi dulu URL, key, dan model",
-    "profile_required": "Isi full name dulu",
-    "test_connection_required": "Tes koneksi dulu sebelum lanjut"
+    "auth": "Invalid API key or URL",
+    "network": "Connection lost",
+    "server": "Server's acting up",
+    "timeout": "Request timed out",
+    "unknown": "Something went wrong",
+    "config_incomplete": "Complete URL, key, and model first",
+    "profile_required": "Enter your full name first",
+    "test_connection_required": "Test the connection before continuing",
+    "unsupported_file": "Unsupported file type",
+    "file_too_large": "File too large (max 8MB)",
+    "payload_too_large": "Request too large — try a smaller file",
+    "not_an_image": "Not an image file",
+    "wrong_password": "Wrong password",
+    "connection_failed": "Connection failed",
+    "api_config_missing": "Server API config missing"
   }
 }

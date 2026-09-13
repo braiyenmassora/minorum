@@ -1,5 +1,4 @@
-/** Server/client config for optional web_search tools on chat requests. */
-
+/** Server-only — import from `@/lib/env`, not from client bundles. */
 export type WebToolsConfig = {
   enabled: boolean;
   /** Empty = any model when enabled. Non-empty = allowlist only. */
@@ -16,26 +15,6 @@ export const DEFAULT_WEB_TOOLS_CONFIG: WebToolsConfig = {
   searchProvider: "search-combo",
   fetchProvider: "fetch-combo",
 };
-
-/** Read from process.env on the server (gate route). */
-export function readWebToolsConfigFromEnv(): WebToolsConfig {
-  const raw = process.env.MINORUM_WEB_TOOLS?.trim().toLowerCase() ?? "";
-  const enabled = raw === "1" || raw === "true" || raw === "yes";
-  const modelsRaw = process.env.MINORUM_WEB_TOOLS_MODELS?.trim() ?? "";
-  const modelAllowlist = modelsRaw
-    ? modelsRaw
-        .split(",")
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-    : [];
-  const searchProvider =
-    process.env.MINORUM_SEARCH_PROVIDER?.trim() ||
-    DEFAULT_WEB_TOOLS_CONFIG.searchProvider;
-  const fetchProvider =
-    process.env.MINORUM_FETCH_PROVIDER?.trim() ||
-    DEFAULT_WEB_TOOLS_CONFIG.fetchProvider;
-  return { enabled, modelAllowlist, searchProvider, fetchProvider };
-}
 
 export function modelOnWebToolsAllowlist(
   modelName: string,

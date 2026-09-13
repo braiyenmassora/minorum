@@ -5,16 +5,18 @@ export type ChatApiErrorKind =
   | "timeout"
   | "cancelled"
   | "tools_rejected"
+  | "payload_too_large"
   | "unknown";
 
 const USER_MESSAGES: Record<ChatApiErrorKind, string> = {
-  auth: "API key/URL salah",
-  network: "Koneksi putus",
-  server: "Server rewel",
-  timeout: "Kelamaan nunggu",
+  auth: "Invalid API key or URL",
+  network: "Connection lost",
+  server: "Server's acting up",
+  timeout: "Request timed out",
   cancelled: "",
   tools_rejected: "",
-  unknown: "Ada yang salah",
+  payload_too_large: "Request too large — try a smaller file",
+  unknown: "Something went wrong",
 };
 
 export class ChatApiError extends Error {
@@ -30,6 +32,9 @@ export class ChatApiError extends Error {
 export function classifyHttpStatus(status: number): ChatApiErrorKind {
   if (status === 401 || status === 403) {
     return "auth";
+  }
+  if (status === 413) {
+    return "payload_too_large";
   }
   if (status >= 500) {
     return "server";

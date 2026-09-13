@@ -1,9 +1,9 @@
+import { readWebToolsConfigFromEnv } from "@/lib/env";
 import {
   FALLBACK_WEB_TOOLS,
   detectWebToolProvider,
   looksLikeToolRejection,
   modelOnWebToolsAllowlist,
-  readWebToolsConfigFromEnv,
   resolveWebToolsForModel,
   webToolsActiveForRequest,
   webToolsEligible,

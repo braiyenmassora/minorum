@@ -14,7 +14,7 @@ type CopyIconButtonProps = {
 export function CopyIconButton({
   text,
   className,
-  label = "Salin",
+  label = "Copy",
 }: CopyIconButtonProps) {
   const [copied, setCopied] = useState(false);
 
@@ -34,7 +34,7 @@ export function CopyIconButton({
       onClick={() => void handleCopy()}
       aria-label={label}
       className={cn(
-        "inline-flex size-7 items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text-primary",
+        "inline-flex size-control-xs items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text-primary",
         className,
       )}
     >
