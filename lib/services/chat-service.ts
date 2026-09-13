@@ -1,17 +1,21 @@
 import {
   buildChatCompletionsUrl,
   buildModelsUrl,
+  normalizeApiBaseUrl,
   type AppConfig,
 } from "@/lib/core/config/app-config";
 import type { ModelEntry } from "@/lib/core/config/model-label";
 import {
   DEFAULT_WEB_TOOLS_CONFIG,
+  FALLBACK_WEB_TOOLS,
   type WebToolsConfig,
   looksLikeToolRejection,
   resolveWebToolsForModel,
   webToolsActiveForRequest,
+  webToolsEligible,
 } from "@/lib/core/config/web-tools-config";
 import { buildSystemPrompt } from "@/lib/core/persona/minorum-persona";
+import type { ChatMessageUsage, ChatTokenUsage } from "@/lib/models/chat-usage";
 import type { ApiMessage, Message } from "@/lib/models/message";
 import { toApiMessageContent } from "@/lib/models/message-content";
 import {
@@ -29,6 +33,34 @@ const MAX_RETRIES = 2;
 const IDLE_READ_TIMEOUT_MS = 30_000;
 /** Base backoff between retries; grows exponentially per attempt. */
 const RETRY_BACKOFF_MS = 400;
+
+export type ChatStreamEvent =
+  | { type: "delta"; content: string }
+  | { type: "meta"; usage: ChatMessageUsage };
+
+function parseServedModel(response: Response): string | undefined {
+  const served = response.headers.get("x-9router-model")?.trim();
+  return served || undefined;
+}
+
+function buildMessageUsage(
+  comboModel: string,
+  servedModel: string | undefined,
+  tokenUsage: ChatTokenUsage | undefined,
+  responseModel?: string,
+): ChatMessageUsage {
+  const served =
+    servedModel ??
+    (responseModel && responseModel !== comboModel ? responseModel : undefined);
+
+  return {
+    comboModel,
+    servedModel: served,
+    promptTokens: tokenUsage?.promptTokens,
+    completionTokens: tokenUsage?.completionTokens,
+    totalTokens: tokenUsage?.totalTokens,
+  };
+}
 
 /**
  * A stream attempt is retryable only if it produced no tokens yet (retrying
@@ -94,9 +126,11 @@ function authHeaders(apiKey: string): HeadersInit {
   };
 }
 
+type ApiEndpoint = "models" | "chat/completions" | "search" | "web/fetch";
+
 function resolveRequestTarget(
   config: AppConfig,
-  endpoint: "models" | "chat/completions",
+  endpoint: ApiEndpoint,
 ): { url: string; headers: HeadersInit } {
   // Browser: same-origin proxy avoids CORS / mixed-content blocks.
   if (typeof window !== "undefined") {
@@ -109,12 +143,20 @@ function resolveRequestTarget(
     };
   }
 
-  const url =
-    endpoint === "models"
-      ? buildModelsUrl(config.apiBaseUrl)
-      : buildChatCompletionsUrl(config.apiBaseUrl);
+  if (endpoint === "models") {
+    return { url: buildModelsUrl(config.apiBaseUrl), headers: authHeaders(config.apiKey) };
+  }
+  if (endpoint === "chat/completions") {
+    return {
+      url: buildChatCompletionsUrl(config.apiBaseUrl),
+      headers: authHeaders(config.apiKey),
+    };
+  }
 
-  return { url, headers: authHeaders(config.apiKey) };
+  return {
+    url: `${normalizeApiBaseUrl(config.apiBaseUrl)}/${endpoint}`,
+    headers: authHeaders(config.apiKey),
+  };
 }
 
 async function fetchWithTimeout(
@@ -177,29 +219,207 @@ function buildChatCompletionBody({
   stream,
   webToolsConfig,
   attachWebTools,
+  extraMessages = [],
 }: {
   model: string;
   messages: Message[];
   stream: boolean;
   webToolsConfig: WebToolsConfig;
   attachWebTools: boolean;
+  extraMessages?: Record<string, unknown>[];
 }): { body: Record<string, unknown>; webToolsActive: boolean } {
-  const webToolsActive =
+  const nativeToolsActive =
     attachWebTools && webToolsActiveForRequest(model, webToolsConfig);
+  // Fallback path already gathered real search/fetch results into extraMessages
+  // before this request, so the persona should treat browsing as available too.
+  const webToolsActive = nativeToolsActive || extraMessages.length > 0;
   const body: Record<string, unknown> = {
     model,
     stream,
-    messages: toApiMessages(messages, webToolsActive),
+    messages: [
+      ...toApiMessages(messages, webToolsActive),
+      ...extraMessages,
+    ],
   };
 
-  if (webToolsActive) {
+  if (nativeToolsActive) {
     const tools = resolveWebToolsForModel(model);
     if (tools) {
       body.tools = tools;
     }
   }
 
+  if (stream) {
+    body.stream_options = { include_usage: true };
+  }
+
   return { body, webToolsActive };
+}
+
+const MAX_FALLBACK_TOOL_ROUNDS = 3;
+const FALLBACK_TOOL_TIMEOUT_MS = 20_000;
+
+type FallbackToolCall = {
+  id: string;
+  type?: string;
+  function: { name: string; arguments: string };
+};
+
+async function executeFallbackTool(
+  config: AppConfig,
+  toolCall: FallbackToolCall,
+  webToolsConfig: WebToolsConfig,
+  signal?: AbortSignal,
+): Promise<string> {
+  let args: Record<string, unknown> = {};
+  try {
+    args = JSON.parse(toolCall.function.arguments || "{}") as Record<
+      string,
+      unknown
+    >;
+  } catch {
+    return JSON.stringify({ error: "Malformed tool arguments" });
+  }
+
+  try {
+    if (toolCall.function.name === "web_search") {
+      const query = typeof args.query === "string" ? args.query.trim() : "";
+      if (!query) {
+        return JSON.stringify({ error: "Missing query" });
+      }
+      const maxResults =
+        typeof args.max_results === "number" ? args.max_results : 5;
+      const { url, headers } = resolveRequestTarget(config, "search");
+      const response = await fetchWithTimeout(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: webToolsConfig.searchProvider,
+          query,
+          max_results: maxResults,
+        }),
+        signal,
+        timeoutMs: FALLBACK_TOOL_TIMEOUT_MS,
+      });
+      if (!response.ok) {
+        return JSON.stringify({ error: `search failed (${response.status})` });
+      }
+      return JSON.stringify(await response.json());
+    }
+
+    if (toolCall.function.name === "web_fetch") {
+      const targetUrl = typeof args.url === "string" ? args.url.trim() : "";
+      if (!targetUrl) {
+        return JSON.stringify({ error: "Missing url" });
+      }
+      const { url, headers } = resolveRequestTarget(config, "web/fetch");
+      const response = await fetchWithTimeout(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: webToolsConfig.fetchProvider,
+          url: targetUrl,
+          format: "markdown",
+          max_characters: 8000,
+        }),
+        signal,
+        timeoutMs: FALLBACK_TOOL_TIMEOUT_MS,
+      });
+      if (!response.ok) {
+        return JSON.stringify({ error: `fetch failed (${response.status})` });
+      }
+      return JSON.stringify(await response.json());
+    }
+  } catch {
+    return JSON.stringify({ error: "Tool execution failed" });
+  }
+
+  return JSON.stringify({ error: `Unknown tool: ${toolCall.function.name}` });
+}
+
+/**
+ * Pre-flight round-trip for models without a native browsing tool: offers
+ * generic web_search/web_fetch functions, executes any calls the model makes
+ * against 9Router's REST endpoints, and returns the assistant/tool messages
+ * to splice into the real request. Returns [] if the model never calls a
+ * tool (no fallback needed) or if anything goes wrong (best-effort).
+ */
+async function runFallbackToolLoop({
+  config,
+  messages,
+  webToolsConfig,
+  signal,
+}: {
+  config: AppConfig;
+  messages: Message[];
+  webToolsConfig: WebToolsConfig;
+  signal?: AbortSignal;
+}): Promise<Record<string, unknown>[]> {
+  const model = requireModelName(config);
+  const wire: Record<string, unknown>[] = [...toApiMessages(messages, true)];
+  const extras: Record<string, unknown>[] = [];
+  const { url, headers } = resolveRequestTarget(config, "chat/completions");
+
+  for (let round = 0; round < MAX_FALLBACK_TOOL_ROUNDS; round += 1) {
+    const response = await fetchWithTimeout(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model,
+        stream: false,
+        messages: wire,
+        tools: FALLBACK_WEB_TOOLS,
+        tool_choice: "auto",
+      }),
+      signal,
+      timeoutMs: 45_000,
+    });
+
+    if (!response.ok) {
+      break;
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{
+        message?: {
+          content?: string | null;
+          tool_calls?: FallbackToolCall[];
+        };
+      }>;
+    };
+
+    const message = data.choices?.[0]?.message;
+    const toolCalls = message?.tool_calls;
+    if (!toolCalls || toolCalls.length === 0) {
+      break;
+    }
+
+    const assistantTurn = {
+      role: "assistant",
+      content: message?.content ?? null,
+      tool_calls: toolCalls,
+    };
+    wire.push(assistantTurn);
+    extras.push(assistantTurn);
+
+    for (const call of toolCalls) {
+      const result = await executeFallbackTool(
+        config,
+        call,
+        webToolsConfig,
+        signal,
+      );
+      const toolMessage = {
+        role: "tool",
+        tool_call_id: call.id,
+        content: result,
+      };
+      wire.push(toolMessage);
+      extras.push(toolMessage);
+    }
+  }
+
+  return extras;
 }
 
 export async function testConnection(
@@ -264,21 +484,24 @@ async function completeChat({
   signal,
   webToolsConfig,
   attachWebTools,
+  extraMessages,
 }: {
   config: AppConfig;
   messages: Message[];
   signal?: AbortSignal;
   webToolsConfig: WebToolsConfig;
   attachWebTools: boolean;
-}): Promise<string> {
-  const model = requireModelName(config);
+  extraMessages?: Record<string, unknown>[];
+}): Promise<{ content: string; usage: ChatMessageUsage }> {
+  const comboModel = requireModelName(config);
   const { url, headers } = resolveRequestTarget(config, "chat/completions");
   const { body } = buildChatCompletionBody({
-    model,
+    model: comboModel,
     messages,
     stream: false,
     webToolsConfig,
     attachWebTools,
+    extraMessages,
   });
   const response = await fetchWithTimeout(url, {
     method: "POST",
@@ -297,11 +520,33 @@ async function completeChat({
   }
 
   const data = (await response.json()) as {
+    model?: string;
     choices?: Array<{ message?: { content?: string | null } }>;
+    usage?: {
+      prompt_tokens?: number;
+      completion_tokens?: number;
+      total_tokens?: number;
+    };
   };
 
   const content = data.choices?.[0]?.message?.content;
-  return typeof content === "string" ? content : "";
+  const tokenUsage: ChatTokenUsage | undefined = data.usage
+    ? {
+        promptTokens: data.usage.prompt_tokens,
+        completionTokens: data.usage.completion_tokens,
+        totalTokens: data.usage.total_tokens,
+      }
+    : undefined;
+
+  return {
+    content: typeof content === "string" ? content : "",
+    usage: buildMessageUsage(
+      comboModel,
+      parseServedModel(response),
+      tokenUsage,
+      typeof data.model === "string" ? data.model : undefined,
+    ),
+  };
 }
 
 async function* streamChatAttempt({
@@ -310,21 +555,24 @@ async function* streamChatAttempt({
   signal,
   webToolsConfig,
   attachWebTools,
+  extraMessages,
 }: {
   config: AppConfig;
   messages: Message[];
   signal?: AbortSignal;
   webToolsConfig: WebToolsConfig;
   attachWebTools: boolean;
-}): AsyncGenerator<string> {
-  const model = requireModelName(config);
+  extraMessages?: Record<string, unknown>[];
+}): AsyncGenerator<ChatStreamEvent> {
+  const comboModel = requireModelName(config);
   const { url, headers } = resolveRequestTarget(config, "chat/completions");
   const { body } = buildChatCompletionBody({
-    model,
+    model: comboModel,
     messages,
     stream: true,
     webToolsConfig,
     attachWebTools,
+    extraMessages,
   });
   const response = await fetchWithTimeout(url, {
     method: "POST",
@@ -345,6 +593,7 @@ async function* streamChatAttempt({
     throw new ChatApiError("network");
   }
 
+  const servedModel = parseServedModel(response);
   const parser = new ChatStreamParser();
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -364,13 +613,13 @@ async function* streamChatAttempt({
         decoder.decode(value, { stream: true }),
       )) {
         yielded = true;
-        yield token;
+        yield { type: "delta", content: token };
       }
     }
 
     for (const token of parser.flush()) {
       yielded = true;
-      yield token;
+      yield { type: "delta", content: token };
     }
   } finally {
     try {
@@ -380,20 +629,30 @@ async function* streamChatAttempt({
     }
   }
 
+  const tokenUsage = parser.takeUsage();
+
   // OmniRoute: some providers (e.g. aug) return only `data: [DONE]` for stream.
   if (!yielded) {
-    const content = await completeChat({
+    const result = await completeChat({
       config,
       messages,
       signal,
       webToolsConfig,
       attachWebTools,
+      extraMessages,
     });
-    if (!content.trim()) {
+    if (!result.content.trim()) {
       throw new ChatApiError("unknown");
     }
-    yield content;
+    yield { type: "delta", content: result.content };
+    yield { type: "meta", usage: result.usage };
+    return;
   }
+
+  yield {
+    type: "meta",
+    usage: buildMessageUsage(comboModel, servedModel, tokenUsage),
+  };
 }
 
 export async function* streamChat({
@@ -406,22 +665,48 @@ export async function* streamChat({
   messages: Message[];
   signal?: AbortSignal;
   webToolsConfig?: WebToolsConfig;
-}): AsyncGenerator<string> {
+}): AsyncGenerator<ChatStreamEvent> {
   let attempt = 0;
   let toolsDisabled = false;
+
+  // Models without a native browsing tool get one anyway: offer generic
+  // web_search/web_fetch functions, execute any calls, and splice the
+  // results into the real request below. Best-effort — a failure here just
+  // means the model answers without gathered context, same as before.
+  const model = config.modelName.trim();
+  let extraMessages: Record<string, unknown>[] = [];
+  if (
+    model &&
+    webToolsEligible(model, webToolsConfig) &&
+    resolveWebToolsForModel(model) === null
+  ) {
+    try {
+      extraMessages = await runFallbackToolLoop({
+        config,
+        messages,
+        webToolsConfig,
+        signal,
+      });
+    } catch {
+      extraMessages = [];
+    }
+  }
 
   while (attempt <= MAX_RETRIES) {
     let produced = false;
     try {
-      for await (const token of streamChatAttempt({
+      for await (const event of streamChatAttempt({
         config,
         messages,
         signal,
         webToolsConfig,
         attachWebTools: !toolsDisabled,
+        extraMessages,
       })) {
-        produced = true;
-        yield token;
+        if (event.type === "delta") {
+          produced = true;
+        }
+        yield event;
       }
       return;
     } catch (error) {

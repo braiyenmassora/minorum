@@ -1,3 +1,5 @@
+import { parseUsageField, type ChatTokenUsage } from "@/lib/models/chat-usage";
+
 function extractDeltaContent(payload: string): string | null {
   if (!payload || payload === "[DONE]") {
     return null;
@@ -6,6 +8,7 @@ function extractDeltaContent(payload: string): string | null {
   try {
     const json = JSON.parse(payload) as {
       choices?: Array<{ delta?: { content?: string } }>;
+      usage?: unknown;
     };
     const content = json.choices?.[0]?.delta?.content;
     return typeof content === "string" ? content : null;
@@ -14,8 +17,25 @@ function extractDeltaContent(payload: string): string | null {
   }
 }
 
-export function parseSseBlock(block: string): string[] {
+function extractUsage(payload: string): ChatTokenUsage | null {
+  if (!payload || payload === "[DONE]") {
+    return null;
+  }
+
+  try {
+    const json = JSON.parse(payload) as { usage?: unknown };
+    return parseUsageField(json.usage);
+  } catch {
+    return null;
+  }
+}
+
+export function parseSseBlock(block: string): {
+  tokens: string[];
+  usage: ChatTokenUsage | null;
+} {
   const tokens: string[] = [];
+  let usage: ChatTokenUsage | null = null;
 
   for (const line of block.split("\n")) {
     const trimmed = line.trim();
@@ -23,17 +43,24 @@ export function parseSseBlock(block: string): string[] {
       continue;
     }
 
-    const content = extractDeltaContent(trimmed.slice(5).trim());
+    const payload = trimmed.slice(5).trim();
+    const content = extractDeltaContent(payload);
     if (content) {
       tokens.push(content);
     }
+
+    const blockUsage = extractUsage(payload);
+    if (blockUsage) {
+      usage = blockUsage;
+    }
   }
 
-  return tokens;
+  return { tokens, usage };
 }
 
 export class ChatStreamParser {
   private buffer = "";
+  private lastUsage: ChatTokenUsage | null = null;
 
   push(chunk: string): string[] {
     this.buffer += chunk;
@@ -47,7 +74,11 @@ export class ChatStreamParser {
     while (boundary !== -1) {
       const block = this.buffer.slice(0, boundary);
       this.buffer = this.buffer.slice(boundary + 2);
-      tokens.push(...parseSseBlock(block));
+      const parsed = parseSseBlock(block);
+      tokens.push(...parsed.tokens);
+      if (parsed.usage) {
+        this.lastUsage = parsed.usage;
+      }
       boundary = this.buffer.indexOf("\n\n");
     }
 
@@ -60,8 +91,17 @@ export class ChatStreamParser {
       return [];
     }
 
-    const tokens = parseSseBlock(this.buffer);
+    const parsed = parseSseBlock(this.buffer);
     this.buffer = "";
-    return tokens;
+    if (parsed.usage) {
+      this.lastUsage = parsed.usage;
+    }
+    return parsed.tokens;
+  }
+
+  takeUsage(): ChatTokenUsage | undefined {
+    const usage = this.lastUsage ?? undefined;
+    this.lastUsage = null;
+    return usage;
   }
 }

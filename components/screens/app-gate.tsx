@@ -13,7 +13,6 @@ import {
   type WebToolsConfig,
 } from "@/lib/core/config/web-tools-config";
 import { loadAppCopy } from "@/lib/core/copy/app-copy";
-import { clearChatSessions } from "@/lib/services/chat-history-storage-service";
 import {
   clearConfig,
   loadConfig,
@@ -23,8 +22,9 @@ import {
 loadAppCopy();
 
 async function logoutAndReset(): Promise<void> {
+  // Chat history now lives server-side (Neon) so it survives logout and
+  // follows the user across devices — only local config/cookie is cleared.
   clearConfig();
-  clearChatSessions();
   try {
     await fetch("/api/gate", {
       method: "DELETE",

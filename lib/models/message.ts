@@ -1,3 +1,5 @@
+import type { ChatMessageUsage } from "@/lib/models/chat-usage";
+
 export type MessageRole = "user" | "assistant";
 
 export type TextPart = { type: "text"; text: string };
@@ -16,6 +18,8 @@ export type Message = {
   id: string;
   role: MessageRole;
   content: MessageContent;
+  /** Set on assistant replies when upstream returns usage / routing metadata. */
+  usage?: ChatMessageUsage;
 };
 
 export type ApiMessage = {

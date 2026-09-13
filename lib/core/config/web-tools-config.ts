@@ -4,11 +4,17 @@ export type WebToolsConfig = {
   enabled: boolean;
   /** Empty = any model when enabled. Non-empty = allowlist only. */
   modelAllowlist: readonly string[];
+  /** 9Router search provider/combo id used by the fallback tool loop. */
+  searchProvider: string;
+  /** 9Router fetch provider/combo id used by the fallback tool loop. */
+  fetchProvider: string;
 };
 
 export const DEFAULT_WEB_TOOLS_CONFIG: WebToolsConfig = {
   enabled: false,
   modelAllowlist: [],
+  searchProvider: "search-combo",
+  fetchProvider: "fetch-combo",
 };
 
 /** Read from process.env on the server (gate route). */
@@ -22,7 +28,13 @@ export function readWebToolsConfigFromEnv(): WebToolsConfig {
         .map((entry) => entry.trim())
         .filter(Boolean)
     : [];
-  return { enabled, modelAllowlist };
+  const searchProvider =
+    process.env.MINORUM_SEARCH_PROVIDER?.trim() ||
+    DEFAULT_WEB_TOOLS_CONFIG.searchProvider;
+  const fetchProvider =
+    process.env.MINORUM_FETCH_PROVIDER?.trim() ||
+    DEFAULT_WEB_TOOLS_CONFIG.fetchProvider;
+  return { enabled, modelAllowlist, searchProvider, fetchProvider };
 }
 
 export function modelOnWebToolsAllowlist(
@@ -101,6 +113,49 @@ export function webToolsActiveForRequest(
     resolveWebToolsForModel(modelName) !== null
   );
 }
+
+/**
+ * Generic OpenAI-style function tools for models without a native browsing
+ * tool (i.e. resolveWebToolsForModel returns null). The caller executes these
+ * itself against 9Router's /v1/search and /v1/web/fetch REST endpoints —
+ * see chat-service.ts's fallback tool loop.
+ */
+export const FALLBACK_WEB_TOOLS: ChatRequestTool[] = [
+  {
+    type: "function",
+    function: {
+      name: "web_search",
+      description:
+        "Search the web for current information, articles, or facts. Use before answering anything that may have changed after your training cutoff, or that needs a real source.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "The search query." },
+          max_results: {
+            type: "integer",
+            description: "Number of results to return (default 5).",
+          },
+        },
+        required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "web_fetch",
+      description:
+        "Fetch the full content of a specific URL as markdown. Use after web_search to read a promising result in full, or when the user gives a direct link.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: { type: "string", description: "The URL to fetch." },
+        },
+        required: ["url"],
+      },
+    },
+  },
+];
 
 /** Heuristic: upstream rejected the tools parameter — retry without tools. */
 export function looksLikeToolRejection(status: number, body: string): boolean {

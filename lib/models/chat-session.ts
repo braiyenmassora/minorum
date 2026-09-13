@@ -8,6 +8,7 @@ export type ChatSession = {
   title: string;
   updatedAt: number;
   messages: Message[];
+  pinned: boolean;
 };
 
 export function titleFromMessages(messages: Message[]): string {

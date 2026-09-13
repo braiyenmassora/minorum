@@ -12,10 +12,17 @@ const sampleBlock =
   "data: [DONE]\n\n";
 
 assert(
-  parseSseBlock('data: {"choices":[{"delta":{"content":"Hi"}}]}').join("") ===
-    "Hi",
+  parseSseBlock('data: {"choices":[{"delta":{"content":"Hi"}}]}').tokens.join(
+    "",
+  ) === "Hi",
   "parse single sse block",
 );
+
+const usageBlock = parseSseBlock(
+  'data: {"choices":[],"usage":{"prompt_tokens":3,"completion_tokens":5,"total_tokens":8}}',
+);
+assert(usageBlock.tokens.length === 0, "usage-only chunk has no tokens");
+assert(usageBlock.usage?.totalTokens === 8, "parse usage from sse");
 
 const parser = new ChatStreamParser();
 const first = parser.push(sampleBlock);

@@ -1,6 +1,6 @@
 # Minorum Web
 
-Web chat client for Minorum — ported from the Flutter app. Set up your API once, then chat with streaming, markdown, image upload, and model selection.
+Web chat client for Minorum, set up your API once, then chat with streaming, markdown, image upload, and model selection.
 
 ## Stack
 

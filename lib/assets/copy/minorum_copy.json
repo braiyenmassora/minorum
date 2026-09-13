@@ -1,11 +1,11 @@
 {
   "app_meta": {
     "app_name": "Minorum",
-    "tagline": "Teman ngobrol yang hangat & sedikit blak-blakan"
+    "tagline": "Answers fast. Judges your code a little."
   },
   "setup_screen": {
     "title": "Minorum",
-    "subtitle": "Teman ngobrol yang hangat & sedikit blak-blakan",
+    "subtitle": "Answers fast. Judges your code a little.",
     "connection_section": "Koneksi API",
     "profile_section": "Profil",
     "full_name_label": "Full name",
@@ -35,10 +35,15 @@
     "title": "Minorum",
     "new_chat": "New chat",
     "clear_all": "Clear all chats",
-    "clear_all_confirm_body": "Semua chat bakal dihapus permanen. Config API tetap aman.",
+    "clear_all_confirm_body": "Every message here, gone for good. Your API config isn't touched.",
     "clear_all_confirm": "Hapus semua",
     "clear_all_cancel": "Batal",
-    "empty": "No chats yet",
+    "empty": "Nothing here. Yet.",
+    "search_placeholder": "Search chats",
+    "no_search_results": "Nothing matches that. Try different words?",
+    "pinned_section": "Pinned",
+    "pin": "Pin chat",
+    "unpin": "Unpin chat",
     "delete": "Delete",
     "close": "Close",
     "account": "Profil",
@@ -55,7 +60,7 @@
   },
   "chat_screen_reset_bottom_sheet": {
     "title": "Reset chat?",
-    "body": "Semua pesan di sesi ini bakal hilang. Config API tetap aman.",
+    "body": "Every message here, gone. Your API config isn't touched.",
     "confirm": "Reset",
     "cancel": "Batal"
   },

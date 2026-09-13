@@ -27,19 +27,26 @@ export function formatGreetingTitle(name: string, now = new Date()): string {
   return firstName ? `${greeting}, ${firstName}` : greeting;
 }
 
-/** Empty-state clock — Asia/Jakarta, e.g. "Jakarta, Indonesia · pukul 08.00 AM" */
+/** Empty-state subtitle line, picked by Asia/Jakarta time-of-day bucket. */
 export function formatJakartaEmptySubtitle(now = new Date()): string {
-  const time = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Jakarta",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  })
-    .format(now)
-    .replace(":", ".")
-    .replace(/\u202f/g, " ");
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Jakarta",
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).format(now),
+  );
 
-  return `Jakarta, Indonesia · pukul ${time}`;
+  if (hour >= 5 && hour < 11) {
+    return "Compiler's warm. What are we building?";
+  }
+  if (hour >= 11 && hour < 15) {
+    return "Peak hours for bugs and bad decisions.";
+  }
+  if (hour >= 15 && hour < 18) {
+    return "Golden hour for code reviews nobody asked for.";
+  }
+  return "Prime debugging hours, allegedly.";
 }
 
 /**

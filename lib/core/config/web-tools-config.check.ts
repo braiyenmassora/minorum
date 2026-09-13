@@ -1,4 +1,5 @@
 import {
+  FALLBACK_WEB_TOOLS,
   detectWebToolProvider,
   looksLikeToolRejection,
   modelOnWebToolsAllowlist,
@@ -24,6 +25,19 @@ delete process.env.MINORUM_WEB_TOOLS_MODELS;
 assert(!off.enabled, "default off when env unset");
 assert(on.enabled, "enabled from env");
 assert(on.modelAllowlist.length === 2, "allowlist parsed");
+assert(off.searchProvider === "search-combo", "default search provider");
+assert(off.fetchProvider === "fetch-combo", "default fetch provider");
+
+process.env.MINORUM_SEARCH_PROVIDER = "tavily";
+const withProvider = readWebToolsConfigFromEnv();
+delete process.env.MINORUM_SEARCH_PROVIDER;
+assert(withProvider.searchProvider === "tavily", "search provider from env");
+
+assert(
+  FALLBACK_WEB_TOOLS.length === 2 &&
+    FALLBACK_WEB_TOOLS.every((tool) => tool.type === "function"),
+  "fallback tools are generic function schemas",
+);
 
 assert(
   webToolsEligible("kr/claude-sonnet-4.5", on),
@@ -31,7 +45,12 @@ assert(
 );
 assert(!webToolsEligible("other/model", on), "non-allowlisted blocked");
 
-const allModels = { enabled: true, modelAllowlist: [] as string[] };
+const allModels = {
+  enabled: true,
+  modelAllowlist: [] as string[],
+  searchProvider: "search-combo",
+  fetchProvider: "fetch-combo",
+};
 assert(
   modelOnWebToolsAllowlist("anything", allModels.modelAllowlist),
   "empty allowlist = all",

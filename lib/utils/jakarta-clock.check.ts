@@ -16,7 +16,7 @@ const noon = formatJakartaEmptySubtitle(
   new Date("2026-07-14T05:00:00.000Z"), // 12:00 WIB
 );
 assert(
-  noon === "Jakarta, Indonesia · pukul 12.00 PM",
+  noon === "Peak hours for bugs and bad decisions.",
   `unexpected noon: ${noon}`,
 );
 
@@ -24,7 +24,7 @@ const morning = formatJakartaEmptySubtitle(
   new Date("2026-07-14T01:00:00.000Z"), // 08:00 WIB
 );
 assert(
-  morning === "Jakarta, Indonesia · pukul 08.00 AM",
+  morning === "Compiler's warm. What are we building?",
   `unexpected morning: ${morning}`,
 );
 

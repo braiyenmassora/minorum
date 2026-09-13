@@ -54,6 +54,7 @@ import {
   deleteChatSession,
   getChatSession,
   listChatSessions,
+  setChatSessionPinned,
   upsertChatSession,
 } from "@/lib/services/chat-history-storage-service";
 import { prepareImageAttachment } from "@/lib/services/image-attachment-service";
@@ -134,8 +135,8 @@ export function ChatScreen({
   const messagesRef = useRef(messages);
   const sessionEpochRef = useRef(0);
 
-  const refreshSessions = useCallback(() => {
-    setSessions(listChatSessions());
+  const refreshSessions = useCallback(async () => {
+    setSessions(await listChatSessions());
   }, []);
 
   useEffect(() => {
@@ -430,7 +431,7 @@ export function ChatScreen({
       abortRef.current = abortController;
 
       try {
-        for await (const token of streamChat({
+        for await (const event of streamChat({
           config,
           messages: requestMessages,
           signal: abortController.signal,
@@ -438,6 +439,23 @@ export function ChatScreen({
         })) {
           if (sessionEpochRef.current !== epoch) {
             return;
+          }
+
+          if (event.type === "meta") {
+            setMessages((current) => {
+              if (sessionEpochRef.current !== epoch) {
+                return current;
+              }
+
+              const next = current.map((message) =>
+                message.id === assistantId
+                  ? { ...message, usage: event.usage }
+                  : message,
+              );
+              messagesRef.current = next;
+              return next;
+            });
+            continue;
           }
 
           setMessages((current) => {
@@ -454,7 +472,7 @@ export function ChatScreen({
                   {
                     id: assistantId,
                     role: "assistant" as const,
-                    content: token,
+                    content: event.content,
                   },
                 ]
               : current.map((message) =>
@@ -464,7 +482,7 @@ export function ChatScreen({
                         content:
                           (typeof message.content === "string"
                             ? message.content
-                            : getMessageText(message.content)) + token,
+                            : getMessageText(message.content)) + event.content,
                       }
                     : message,
                 );
@@ -503,15 +521,17 @@ export function ChatScreen({
         textareaRef.current?.focus();
         adjustTextareaHeight();
         window.setTimeout(() => {
-          if (sessionEpochRef.current !== epoch) {
-            return;
-          }
+          void (async () => {
+            if (sessionEpochRef.current !== epoch) {
+              return;
+            }
 
-          const latest = messagesRef.current;
-          if (latest.length > 0) {
-            upsertChatSession({ id: sessionId, messages: latest });
-            refreshSessions();
-          }
+            const latest = messagesRef.current;
+            if (latest.length > 0) {
+              await upsertChatSession({ id: sessionId, messages: latest });
+              await refreshSessions();
+            }
+          })();
         }, 0);
       }
     },
@@ -648,7 +668,7 @@ export function ChatScreen({
     setHistoryOpen(false);
   }
 
-  function handleSelectSession(sessionId: string) {
+  async function handleSelectSession(sessionId: string) {
     if (sessionId === activeSessionId) {
       setHistoryOpen(false);
       return;
@@ -657,10 +677,15 @@ export function ChatScreen({
     abortRef.current?.abort();
     abortRef.current = null;
     sessionEpochRef.current += 1;
+    const epoch = sessionEpochRef.current;
 
-    const session = getChatSession(sessionId);
+    const session = await getChatSession(sessionId);
+    if (sessionEpochRef.current !== epoch) {
+      // User already switched sessions again while this was in flight.
+      return;
+    }
     if (!session) {
-      refreshSessions();
+      await refreshSessions();
       return;
     }
 
@@ -676,22 +701,27 @@ export function ChatScreen({
     setHistoryOpen(false);
   }
 
-  function handleDeleteSession(sessionId: string) {
-    deleteChatSession(sessionId);
-    refreshSessions();
+  async function handleTogglePinSession(sessionId: string, pinned: boolean) {
+    await setChatSessionPinned(sessionId, pinned);
+    await refreshSessions();
+  }
+
+  async function handleDeleteSession(sessionId: string) {
+    await deleteChatSession(sessionId);
+    await refreshSessions();
 
     if (sessionId === activeSessionId) {
       startNewSession();
     }
   }
 
-  function handleClearAllSessions() {
+  async function handleClearAllSessions() {
     if (sessions.length === 0) {
       return;
     }
 
-    clearChatSessions();
-    refreshSessions();
+    await clearChatSessions();
+    await refreshSessions();
     startNewSession();
     setHistoryOpen(false);
   }
@@ -733,6 +763,7 @@ export function ChatScreen({
     onNewChat: handleNewChat,
     onSelect: handleSelectSession,
     onDelete: handleDeleteSession,
+    onTogglePin: handleTogglePinSession,
     onClearAll: handleClearAllSessions,
     onLogout,
   };

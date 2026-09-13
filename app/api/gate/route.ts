@@ -5,7 +5,7 @@ import { readWebToolsConfigFromEnv } from "@/lib/core/config/web-tools-config";
 
 const GATE_COOKIE = "minorum_gate";
 const GATE_COOKIE_VALUE = "1";
-const GATE_PASSWORD = process.env.GATE_PASSWORD?.trim() || "30yu210N1995!";
+const GATE_PASSWORD = process.env.GATE_PASSWORD?.trim() || "";
 
 function hasGateCookie(request: NextRequest): boolean {
   return request.cookies.get(GATE_COOKIE)?.value === GATE_COOKIE_VALUE;
@@ -154,6 +154,16 @@ export async function POST(request: Request) {
     password = typeof body.password === "string" ? body.password : "";
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
+  }
+
+  if (!GATE_PASSWORD) {
+    console.error(
+      "[gate] GATE_PASSWORD is not set — set it in .env, then restart the server.",
+    );
+    return NextResponse.json(
+      { ok: false, message: "Server auth not configured" },
+      { status: 500 },
+    );
   }
 
   if (password !== GATE_PASSWORD) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalLink } from "lucide-react";
 import { Children, isValidElement, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -11,6 +12,43 @@ import { normalizeAssistantMarkdown } from "@/lib/utils/normalize-assistant-mark
 type ChatMarkdownProps = {
   content: string;
 };
+
+function hostnameOf(href: string): string | null {
+  try {
+    return new URL(href).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+function LinkChip({
+  href,
+  children,
+}: {
+  href?: string;
+  children?: ReactNode;
+}) {
+  if (!href) {
+    return <>{children}</>;
+  }
+
+  const hostname = hostnameOf(href);
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="chat-markdown-link-chip"
+    >
+      <ExternalLink className="size-3 shrink-0" aria-hidden />
+      <span className="chat-markdown-link-chip-text">{children}</span>
+      {hostname ? (
+        <span className="chat-markdown-link-chip-host">{hostname}</span>
+      ) : null}
+    </a>
+  );
+}
 
 function extractCodeBlock(children: ReactNode): {
   code: string;
@@ -48,14 +86,7 @@ export function ChatMarkdown({ content }: ChatMarkdownProps) {
         remarkPlugins={[remarkGfm]}
         components={{
           a: ({ href, children }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-focus-ring underline underline-offset-2"
-            >
-              {children}
-            </a>
+            <LinkChip href={href}>{children}</LinkChip>
           ),
           h1: ({ children }) => <h1>{children}</h1>,
           h2: ({ children }) => <h2>{children}</h2>,

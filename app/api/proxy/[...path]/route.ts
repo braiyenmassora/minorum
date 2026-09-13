@@ -60,6 +60,12 @@ async function proxyRequest(
   if (upstreamType) {
     responseHeaders.set("Content-Type", upstreamType);
   }
+  for (const name of ["x-9router-model", "x-9router-combo"]) {
+    const value = upstream.headers.get(name);
+    if (value) {
+      responseHeaders.set(name, value);
+    }
+  }
   responseHeaders.set("Cache-Control", "no-cache");
 
   return new NextResponse(upstream.body, {

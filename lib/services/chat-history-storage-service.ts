@@ -1,128 +1,86 @@
-import {
-  CHAT_HISTORY_LIMIT,
-  type ChatSession,
-  titleFromMessages,
-} from "@/lib/models/chat-session";
+import type { ChatSession } from "@/lib/models/chat-session";
 import type { Message } from "@/lib/models/message";
 
-const STORAGE_KEY = "chat_sessions";
-
-function isBrowser(): boolean {
-  return typeof window !== "undefined";
-}
-
-function sortByUpdatedAt(sessions: ChatSession[]): ChatSession[] {
-  return [...sessions].sort((a, b) => b.updatedAt - a.updatedAt);
-}
-
-function clampSessions(sessions: ChatSession[]): ChatSession[] {
-  return sortByUpdatedAt(sessions).slice(0, CHAT_HISTORY_LIMIT);
-}
-
-function readRaw(): ChatSession[] {
-  if (!isBrowser()) {
-    return [];
+async function parseJson<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    throw new Error(`Request failed: ${response.status}`);
   }
+  return (await response.json()) as T;
+}
 
+export async function listChatSessions(): Promise<ChatSession[]> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return clampSessions(
-      parsed.filter(
-        (item): item is ChatSession =>
-          typeof item === "object" &&
-          item !== null &&
-          typeof (item as ChatSession).id === "string" &&
-          typeof (item as ChatSession).title === "string" &&
-          typeof (item as ChatSession).updatedAt === "number" &&
-          Array.isArray((item as ChatSession).messages),
-      ),
-    );
+    const response = await fetch("/api/sessions");
+    const data = await parseJson<{ sessions: ChatSession[] }>(response);
+    return data.sessions;
   } catch {
     return [];
   }
 }
 
-function isQuotaError(error: unknown): boolean {
-  return (
-    error instanceof DOMException &&
-    // Different browsers report quota errors under different names/codes.
-    (error.name === "QuotaExceededError" ||
-      error.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
-      error.code === 22)
-  );
-}
-
-/**
- * Persists sessions, degrading gracefully when localStorage is full (e.g. a
- * chat with large base64 attachments). Drops the oldest sessions and retries
- * so the newest chat still saves instead of throwing into the caller.
- */
-function writeRaw(sessions: ChatSession[]): boolean {
-  if (!isBrowser()) {
-    return false;
-  }
-
-  let toStore = clampSessions(sessions);
-  while (true) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
-      return true;
-    } catch (error) {
-      if (!isQuotaError(error) || toStore.length === 0) {
-        return false;
-      }
-      // Evict the oldest (clampSessions sorts newest-first) and retry.
-      toStore = toStore.slice(0, toStore.length - 1);
+export async function getChatSession(id: string): Promise<ChatSession | null> {
+  try {
+    const response = await fetch(`/api/sessions/${id}`);
+    if (response.status === 404) {
+      return null;
     }
+    const data = await parseJson<{ session: ChatSession }>(response);
+    return data.session;
+  } catch {
+    return null;
   }
 }
 
-export function listChatSessions(): ChatSession[] {
-  return readRaw();
-}
-
-export function getChatSession(id: string): ChatSession | null {
-  return readRaw().find((session) => session.id === id) ?? null;
-}
-
-export function upsertChatSession(input: {
+export async function upsertChatSession(input: {
   id: string;
   messages: Message[];
-}): ChatSession | null {
+}): Promise<ChatSession | null> {
   if (input.messages.length === 0) {
     return null;
   }
 
-  const sessions = readRaw();
-  const existing = sessions.find((session) => session.id === input.id);
-  const next: ChatSession = {
-    id: input.id,
-    title: titleFromMessages(input.messages),
-    updatedAt: Date.now(),
-    messages: input.messages,
-  };
-
-  const updated = existing
-    ? sessions.map((session) => (session.id === input.id ? next : session))
-    : [next, ...sessions];
-
-  writeRaw(updated);
-  return next;
+  try {
+    const response = await fetch(`/api/sessions/${input.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: input.messages }),
+    });
+    const data = await parseJson<{ session: ChatSession }>(response);
+    return data.session;
+  } catch {
+    return null;
+  }
 }
 
-export function deleteChatSession(id: string): void {
-  writeRaw(readRaw().filter((session) => session.id !== id));
+export async function setChatSessionPinned(
+  id: string,
+  pinned: boolean,
+): Promise<ChatSession | null> {
+  try {
+    const response = await fetch(`/api/sessions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pinned }),
+    });
+    const data = await parseJson<{ session: ChatSession }>(response);
+    return data.session;
+  } catch {
+    return null;
+  }
 }
 
-export function clearChatSessions(): void {
-  writeRaw([]);
+export async function deleteChatSession(id: string): Promise<void> {
+  try {
+    await fetch(`/api/sessions/${id}`, { method: "DELETE" });
+  } catch {
+    // Best-effort — the sidebar refetches the list regardless.
+  }
+}
+
+export async function clearChatSessions(): Promise<void> {
+  try {
+    await fetch("/api/sessions", { method: "DELETE" });
+  } catch {
+    // Best-effort — the sidebar refetches the list regardless.
+  }
 }
