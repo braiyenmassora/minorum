@@ -19,8 +19,6 @@ const TONE_HOVER_CLASS: Record<IconButtonTone, string> = {
 export type IconButtonProps = ComponentProps<"button"> & {
   size: IconButtonSize;
   tone?: IconButtonTone;
-  /** Pressed/toggled visual (TTS playing, pinned, …) instead of hover-only. */
-  active?: boolean;
 };
 
 /**
@@ -31,7 +29,6 @@ export type IconButtonProps = ComponentProps<"button"> & {
 export function IconButton({
   size,
   tone = "default",
-  active = false,
   className,
   ...props
 }: IconButtonProps) {
@@ -39,14 +36,9 @@ export function IconButton({
     <button
       type="button"
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-token-sm transition-colors",
+        "inline-flex shrink-0 items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised",
         SIZE_CLASS[size],
-        active
-          ? "bg-surface-raised text-text-primary"
-          : cn(
-              "text-text-muted hover:bg-surface-raised",
-              TONE_HOVER_CLASS[tone],
-            ),
+        TONE_HOVER_CLASS[tone],
         className,
       )}
       {...props}

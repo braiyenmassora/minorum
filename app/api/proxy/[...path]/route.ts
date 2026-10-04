@@ -6,7 +6,6 @@ import { getApiDefaults, isProduction } from "@/lib/env";
 const ALLOWED_PROXY_PATHS = new Set([
   "models",
   "chat/completions",
-  "audio/speech",
   "search",
   "web/fetch",
 ]);
