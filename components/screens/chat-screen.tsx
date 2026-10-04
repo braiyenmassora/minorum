@@ -25,6 +25,7 @@ import {
   ImagePreviewPanel,
 } from "@/components/chat/image-preview-panel";
 import { LensCommandMenu } from "@/components/chat/lens-command-menu";
+import { LensPills } from "@/components/chat/lens-pills";
 import { ModelPickerPanel } from "@/components/chat/model-picker-panel";
 import { TypingIndicator } from "@/components/chat/typing-indicator";
 import { AppLogo } from "@/components/ui/app-logo";
@@ -32,7 +33,11 @@ import { IconButton } from "@/components/ui/icon-button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ThemeToggleButton } from "@/components/ui/theme-toggle-button";
 import type { AppConfig } from "@/lib/core/config/app-config";
-import type { LensCommandDefinition } from "@/lib/core/config/lens-commands";
+import {
+  parseLensCommand,
+  type LensCommand,
+  type LensCommandDefinition,
+} from "@/lib/core/config/lens-commands";
 import {
   DEFAULT_WEB_TOOLS_CONFIG,
   type WebToolsConfig,
@@ -117,6 +122,7 @@ export function ChatScreen({
   const [streaming, setStreaming] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const [activeLens, setActiveLens] = useState<LensCommand | undefined>();
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [pendingDocument, setPendingDocument] =
     useState<PendingDocument | null>(null);
@@ -327,10 +333,30 @@ export function ChatScreen({
 
   const handleLensCommandSelect = useCallback(
     (command: LensCommandDefinition) => {
+      setActiveLens(command.command);
       setInput(`${command.trigger} `);
       requestAnimationFrame(() => textareaRef.current?.focus());
     },
     [],
+  );
+
+  const handleLensPillSelect = useCallback((lens: LensCommand) => {
+    setActiveLens((current) => (current === lens ? undefined : lens));
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }, []);
+
+  const handleComposerInputChange = useCallback(
+    (value: string) => {
+      if (composerLocked) {
+        return;
+      }
+      setInput(value);
+      const parsed = parseLensCommand(value);
+      if (parsed) {
+        setActiveLens(parsed);
+      }
+    },
+    [composerLocked],
   );
 
   const canSend =
@@ -342,16 +368,6 @@ export function ChatScreen({
     !attaching;
 
   const showEmptyState = messages.length === 0 && !streaming;
-
-  const handleComposerInputChange = useCallback(
-    (value: string) => {
-      if (composerLocked) {
-        return;
-      }
-      setInput(value);
-    },
-    [composerLocked],
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -434,6 +450,7 @@ export function ChatScreen({
     setActiveSessionId(null);
     setMessages([]);
     setInput("");
+    setActiveLens(undefined);
     setPendingImage(null);
     setPendingDocument(null);
     setErrorMessage(null);
@@ -475,6 +492,7 @@ export function ChatScreen({
           messages: requestMessages,
           signal: abortController.signal,
           webToolsConfig,
+          lens: activeLens,
         })) {
           if (sessionEpochRef.current !== epoch) {
             return;
@@ -581,6 +599,7 @@ export function ChatScreen({
       }
     },
     [
+      activeLens,
       activeSessionId,
       adjustTextareaHeight,
       config,
@@ -738,6 +757,7 @@ export function ChatScreen({
     setActiveSessionId(session.id);
     setMessages(session.messages);
     setInput("");
+    setActiveLens(undefined);
     setPendingImage(null);
     setPendingDocument(null);
     setErrorMessage(null);
@@ -942,10 +962,10 @@ export function ChatScreen({
                 </div>
               ) : null}
 
-              <div className="flex items-center justify-between gap-2 px-composer py-composer">
+              <div className="flex items-center gap-2 px-composer py-composer">
                 <button
                   type="button"
-                  className="inline-flex min-w-0 flex-1 items-center gap-1 text-left text-token-body font-bold text-text-primary transition-opacity hover:opacity-80 disabled:pointer-events-none"
+                  className="inline-flex min-w-0 max-w-[40%] shrink items-center gap-1 text-left text-token-body font-bold text-text-primary transition-opacity hover:opacity-80 disabled:pointer-events-none"
                   onClick={openModelPicker}
                   disabled={composerLocked}
                   title={config.modelName}
@@ -963,6 +983,12 @@ export function ChatScreen({
                     )}
                   />
                 </button>
+                <LensPills
+                  activeLens={activeLens}
+                  disabled={composerLocked}
+                  onSelect={handleLensPillSelect}
+                  className="ml-1 min-w-0 flex-1 overflow-x-auto"
+                />
                 <div className="flex shrink-0 items-center justify-end gap-0.5">
                   <input
                     ref={fileInputRef}
