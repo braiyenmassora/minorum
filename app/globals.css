@@ -723,9 +723,7 @@ html:not(.dark) .scrollbar-soft::-webkit-scrollbar-thumb {
     -webkit-overflow-scrolling: touch;
   }
 
-  .verminal-code__pre,
-  .verminal-code .hljs {
-    font-size: 14px;
+  .verminal-code__pre {
     -webkit-overflow-scrolling: touch;
   }
 }

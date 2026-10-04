@@ -25,7 +25,7 @@ function languageConventionLines(
   return languages
     .map(
       (lang) =>
-        `- ${lang.name}: style guide — ${lang.styleGuide}; docs — ${lang.docFormat}; naming — ${lang.naming}; tooling — ${lang.tooling}`,
+        `- ${lang.name}: style guide — ${lang.styleGuide}; naming — ${lang.naming}; tooling — ${lang.tooling}`,
     )
     .join("\n");
 }

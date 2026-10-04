@@ -242,69 +242,60 @@
       "selfCheck": "Non-trivial logic leaves one runnable check behind — the smallest thing that fails if the logic breaks (an assert-based demo/self-check, or one small test file; no frameworks, no fixtures). Trivial one-liners need no check."
     },
     "languageConventions": {
-      "principle": "Write code the way a senior developer in that language's ecosystem would — follow its own official/community style guide, doc-comment format, naming convention, and standard formatter/linter below, not generic or made-up conventions.",
+      "principle": "Write code the way a senior developer in that language's ecosystem would — follow its own official/community style guide, naming convention, and standard formatter/linter below, not generic or made-up conventions.",
       "docStructure": "Default to minimal, simple comments — a short line comment (e.g. \"# like this\", or that language's own line-comment syntax) only where it adds real value, never a big structured docstring/JSDoc/Rustdoc block by default. Only write a full formal doc comment (summary + Args/Returns/Raises, etc.) when the user explicitly asks for API documentation or a public library/package.",
       "languages": [
         {
           "name": "Python",
           "styleGuide": "PEP 8",
-          "docFormat": "Google-style docstring (\"\"\"...\"\"\")",
           "naming": "snake_case functions/variables, PascalCase classes, UPPER_CASE constants",
           "tooling": "ruff (format + lint), mypy"
         },
         {
           "name": "SQL (general)",
           "styleGuide": "SQL Style Guide (sqlstyle.guide)",
-          "docFormat": "-- and /* */ header comments",
           "naming": "Keywords UPPERCASE, tables/columns snake_case",
           "tooling": "sqlfluff"
         },
         {
           "name": "MySQL",
           "styleGuide": "Same as general SQL",
-          "docFormat": "-- / /* */",
           "naming": "snake_case; avoid backticks by avoiding spaces/reserved words in names",
           "tooling": "sqlfluff (mysql dialect)"
         },
         {
           "name": "SQL Server (T-SQL)",
           "styleGuide": "Same as general SQL, plus T-SQL conventions",
-          "docFormat": "-- / /* */, header comment on stored procedures",
           "naming": "Explicit schema (dbo.table); consistent SP prefix (avoid sp_, reserved for system procedures)",
           "tooling": "sqlfluff (tsql dialect)"
         },
         {
           "name": "MongoDB",
           "styleGuide": "No official style guide — follow MongoDB's own schema design patterns",
-          "docFormat": "Follows the host language (JS/Python/Go)",
           "naming": "camelCase fields; consistent collection names (e.g. lowercase plural)",
           "tooling": "Follows the host language; mongosh scripts use ESLint"
         },
         {
           "name": "Go",
           "styleGuide": "Effective Go + Go Code Review Comments",
-          "docFormat": "Godoc: // comment starting with the identifier's name",
           "naming": "MixedCaps; capitalized first letter = exported",
           "tooling": "gofmt/goimports, go vet, golangci-lint"
         },
         {
           "name": "JavaScript",
           "styleGuide": "Airbnb or Google JS Style Guide",
-          "docFormat": "JSDoc (/** ... */)",
           "naming": "camelCase variables/functions, PascalCase classes, UPPER_SNAKE_CASE constants",
           "tooling": "ESLint + Prettier"
         },
         {
           "name": "Rust",
           "styleGuide": "Official Rust Style Guide + Rust API Guidelines",
-          "docFormat": "Rustdoc: /// for items, //! for modules",
           "naming": "snake_case functions/variables, CamelCase types, SCREAMING_SNAKE_CASE constants",
           "tooling": "rustfmt, clippy"
         },
         {
           "name": "Flutter (Dart)",
           "styleGuide": "Effective Dart",
-          "docFormat": "/// doc comment",
           "naming": "lowerCamelCase variables, UpperCamelCase classes, snake_case.dart file names",
           "tooling": "dart format, flutter analyze + flutter_lints"
         }
