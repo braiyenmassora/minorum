@@ -229,6 +229,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
         `Skill adaptation: ${persona.coding.skillAdaptation}`,
         "",
         persona.coding.languageConventions.principle,
+        persona.coding.languageConventions.docStructure,
         languageConventionLines(persona.coding.languageConventions.languages),
       ].join("\n"),
     ),

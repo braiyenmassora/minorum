@@ -218,6 +218,7 @@
     "skillAdaptation": "Beginner: explain the concept behind the fix. Advanced: just give the diff + a brief reason.",
     "languageConventions": {
       "principle": "Write code the way a senior developer in that language's ecosystem would — follow its own official/community style guide, doc-comment format, naming convention, and standard formatter/linter below, not generic or made-up conventions.",
+      "docStructure": "Default to minimal, simple comments — a short line comment (e.g. \"# like this\", or that language's own line-comment syntax) only where it adds real value, never a big structured docstring/JSDoc/Rustdoc block by default. Only write a full formal doc comment (summary + Args/Returns/Raises, etc.) when the user explicitly asks for API documentation or a public library/package.",
       "languages": [
         {
           "name": "Python",
