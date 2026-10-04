@@ -1,4 +1,5 @@
 import type { AppConfig } from "@/lib/core/config/app-config";
+import { parseLensCommand } from "@/lib/core/config/lens-commands";
 import type { ModelEntry } from "@/lib/core/config/model-label";
 import {
   DEFAULT_WEB_TOOLS_CONFIG,
@@ -12,7 +13,10 @@ import {
 import { buildSystemPrompt } from "@/lib/core/persona/minorum-persona";
 import type { ChatMessageUsage, ChatTokenUsage } from "@/lib/models/chat-usage";
 import type { ApiMessage, Message } from "@/lib/models/message";
-import { toApiMessageContent } from "@/lib/models/message-content";
+import {
+  getMessageText,
+  toApiMessageContent,
+} from "@/lib/models/message-content";
 import {
   ChatApiError,
   classifyHttpStatus,
@@ -160,6 +164,15 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+/** A /command only locks the lens for the turn it's typed in — check the latest message, not history. */
+function detectLens(messages: Message[]) {
+  const latest = messages[messages.length - 1];
+  if (!latest || latest.role !== "user") {
+    return undefined;
+  }
+  return parseLensCommand(getMessageText(latest.content));
+}
+
 function toApiMessages(
   messages: Message[],
   webToolsActive: boolean,
@@ -167,7 +180,10 @@ function toApiMessages(
   const apiMessages: ApiMessage[] = [
     {
       role: "system",
-      content: buildSystemPrompt({ webToolsActive }),
+      content: buildSystemPrompt({
+        webToolsActive,
+        lens: detectLens(messages),
+      }),
     },
   ];
 

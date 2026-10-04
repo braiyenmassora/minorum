@@ -24,6 +24,7 @@ import {
   DocumentPreviewPanel,
   ImagePreviewPanel,
 } from "@/components/chat/image-preview-panel";
+import { LensCommandMenu } from "@/components/chat/lens-command-menu";
 import { ModelPickerPanel } from "@/components/chat/model-picker-panel";
 import { TypingIndicator } from "@/components/chat/typing-indicator";
 import { AppLogo } from "@/components/ui/app-logo";
@@ -31,6 +32,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ThemeToggleButton } from "@/components/ui/theme-toggle-button";
 import type { AppConfig } from "@/lib/core/config/app-config";
+import type { LensCommandDefinition } from "@/lib/core/config/lens-commands";
 import {
   DEFAULT_WEB_TOOLS_CONFIG,
   type WebToolsConfig,
@@ -316,6 +318,20 @@ export function ChatScreen({
 
   const composerLocked = streaming;
   const attaching = attachingImage || attachingDocument;
+
+  // Only while the composer is still a bare "/word" — once a space is typed
+  // the command is considered committed and the suggestion list closes.
+  const lensCommandQuery = /^\/(\w*)$/.exec(input)?.[1];
+  const showLensMenu =
+    lensCommandQuery !== undefined && !modelPickerOpen && !composerLocked;
+
+  const handleLensCommandSelect = useCallback(
+    (command: LensCommandDefinition) => {
+      setInput(`${command.trigger} `);
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    },
+    [],
+  );
 
   const canSend =
     Boolean(config.modelName.trim()) &&
@@ -903,6 +919,15 @@ export function ChatScreen({
                 <ModelPickerPanel
                   config={config}
                   onSelect={handleModelSelect}
+                />
+              </div>
+            ) : null}
+
+            {showLensMenu ? (
+              <div className="absolute inset-x-0 bottom-full z-30 mb-2 overflow-hidden rounded-token border border-border-subtle bg-assistant-bubble shadow-floating">
+                <LensCommandMenu
+                  query={lensCommandQuery}
+                  onSelect={handleLensCommandSelect}
                 />
               </div>
             ) : null}

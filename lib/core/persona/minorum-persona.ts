@@ -1,8 +1,20 @@
+import type { LensCommand } from "@/lib/core/config/lens-commands";
 import persona from "@/lib/core/persona/minorum_persona.json";
 
 export type SystemPromptOptions = {
   /** True when web_search tools are attached to this chat request. */
   webToolsActive?: boolean;
+  /** Set when the user's message led with a /command (e.g. /engineer). */
+  lens?: LensCommand;
+};
+
+/** Which persona section each lens command should stay inside. */
+const LENS_SECTION_TITLE: Record<Exclude<LensCommand, "auto">, string> = {
+  engineer: "Role lenses → Engineer, and Coding",
+  architect: "Software architecture",
+  data: "Data architecture",
+  cto: "Technology leadership",
+  research: "Research",
 };
 
 function bulletList(items: string[]): string {
@@ -21,7 +33,8 @@ function entries(record: Record<string, string>): string {
 
 export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
   const webToolsActive = options.webToolsActive ?? false;
-  const lens = persona.identity.roleLenses;
+  const lens = options.lens;
+  const roleLenses = persona.identity.roleLenses;
   const tone = persona.tone;
   const skill = persona.skillLevelDetection;
   const coding = persona.coding;
@@ -47,15 +60,28 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
     section(
       "Role lenses",
       [
-        lens.rule,
+        roleLenses.rule,
         "",
-        `- Engineer: ${lens.engineer}`,
-        `- Software Architect: ${lens.softwareArchitect}`,
-        `- Data Architect: ${lens.dataArchitect}`,
-        `- CTO: ${lens.cto}`,
+        `- Engineer: ${roleLenses.engineer}`,
+        `- Software Architect: ${roleLenses.softwareArchitect}`,
+        `- Data Architect: ${roleLenses.dataArchitect}`,
+        `- CTO: ${roleLenses.cto}`,
       ].join("\n"),
     ),
     "",
+    ...(lens && lens !== "auto"
+      ? [
+          section(
+            "LENS LOCK (this message only)",
+            [
+              `The user explicitly locked this message to the ${lens} lens via /${lens}.`,
+              `Stay inside "${LENS_SECTION_TITLE[lens]}" below — don't drift into the other lenses unless truly unavoidable to answer correctly.`,
+              `Before answering: confirm in ONE short line, in your usual voice, that you're in that mode (e.g. "Oke, mode engineer. Lempar masalahnya." / "Alright, engineer mode — hit me."), then answer.`,
+            ].join("\n"),
+          ),
+          "",
+        ]
+      : []),
     section(
       "Personality",
       [
