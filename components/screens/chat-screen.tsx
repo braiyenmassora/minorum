@@ -240,7 +240,7 @@ export function ChatScreen({
           const resolved = resolveModelSelection(
             current.modelName,
             modelIds,
-            "DealWithSign",
+            "flex",
             comboIds,
           );
           if (!resolved || resolved === current.modelName) {

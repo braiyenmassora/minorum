@@ -51,7 +51,7 @@ export function isComboModelId(
   return comboIds.includes(id) || id === "auto" || id.startsWith("auto/");
 }
 
-/** Prefer env override; else DealWithSign / first combo; else first manual model. */
+/** Prefer env override; else "flex" / first combo; else first manual model. */
 export function pickDefaultModel(
   models: string[],
   preferred?: string,
@@ -62,8 +62,8 @@ export function pickDefaultModel(
     return pref;
   }
 
-  if (models.includes("DealWithSign")) {
-    return "DealWithSign";
+  if (models.includes("flex")) {
+    return "flex";
   }
 
   const firstCombo = comboIds.find((id) => models.includes(id));

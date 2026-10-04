@@ -61,7 +61,7 @@ assert(
   "kr/ = anthropic",
 );
 assert(detectWebToolProvider("gpt-4o") === "openai", "gpt = openai");
-assert(detectWebToolProvider("DealWithSign") === "none", "unknown model");
+assert(detectWebToolProvider("unknown-model") === "none", "unknown model");
 
 const anthropicTools = resolveWebToolsForModel("kr/claude-sonnet-4.5");
 assert(
@@ -74,7 +74,7 @@ assert(
   "active when eligible + schema known",
 );
 assert(
-  !webToolsActiveForRequest("DealWithSign", allModels),
+  !webToolsActiveForRequest("unknown-model", allModels),
   "inactive when provider unknown",
 );
 
