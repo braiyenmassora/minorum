@@ -6,7 +6,10 @@ function assert(condition: boolean, message: string): void {
   }
 }
 
-assert(LENS_COMMANDS.length === 6, "six commands defined");
+assert(
+  LENS_COMMANDS.length === 5,
+  "five commands defined (no /auto — it's a no-op, same as typing nothing)",
+);
 
 assert(parseLensCommand("/engineer") === "engineer", "bare command");
 assert(
@@ -18,7 +21,10 @@ assert(
   "leading whitespace tolerated",
 );
 assert(parseLensCommand("/ARCHITECT caps") === "architect", "case-insensitive");
-assert(parseLensCommand("/auto") === "auto", "auto recognized");
+assert(
+  parseLensCommand("/auto") === undefined,
+  "/auto is gone — unrecognized, falls through as plain text",
+);
 assert(
   parseLensCommand("/notarealcommand do x") === undefined,
   "unknown command → undefined",

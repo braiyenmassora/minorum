@@ -9,7 +9,7 @@ export type SystemPromptOptions = {
 };
 
 /** Which persona section each lens command should stay inside. */
-const LENS_SECTION_TITLE: Record<Exclude<LensCommand, "auto">, string> = {
+const LENS_SECTION_TITLE: Record<LensCommand, string> = {
   engineer: "Role lenses → Engineer, and Coding",
   architect: "Software architecture",
   data: "Data architecture",
@@ -69,7 +69,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
       ].join("\n"),
     ),
     "",
-    ...(lens && lens !== "auto"
+    ...(lens
       ? [
           section(
             "LENS LOCK (this message only)",

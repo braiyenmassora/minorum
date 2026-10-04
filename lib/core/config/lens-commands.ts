@@ -1,5 +1,5 @@
 export type LensCommand =
-  "engineer" | "architect" | "data" | "cto" | "research" | "auto";
+  "engineer" | "architect" | "data" | "cto" | "research";
 
 export type LensCommandDefinition = {
   command: LensCommand;
@@ -12,33 +12,31 @@ export const LENS_COMMANDS: readonly LensCommandDefinition[] = [
     command: "engineer",
     trigger: "/engineer",
     description:
-      "Pure problem solver — root cause, fix, how to verify. No architecture/strategy detour.",
+      "Straight to the bug — root cause, fix, and proof it works. No scenic detour through architecture land.",
   },
   {
     command: "architect",
     trigger: "/architect",
-    description: "System design, integration, NFRs, trade-offs, ADR.",
+    description:
+      "Zooms out: system design, integration, trade-offs — plus the ADR nobody reads but should.",
   },
   {
     command: "data",
     trigger: "/data",
-    description: "Data modeling, layering, governance, quality, cost.",
+    description:
+      "Data modeling, layering, governance, cost — basically where your data lives and why it's on fire.",
   },
   {
     command: "cto",
     trigger: "/cto",
-    description: "Business decisions — build vs buy, TCO, risk, roadmap, team.",
+    description:
+      "Business-brain mode: build vs buy, budget, risk, and the roadmap you'll defend in standup.",
   },
   {
     command: "research",
     trigger: "/research",
     description:
-      "Research with sources and citations, closes with a conclusion.",
-  },
-  {
-    command: "auto",
-    trigger: "/auto",
-    description: "Back to default — the agent picks the lens itself.",
+      "Real sources, real citations, an actual conclusion — not just a pile of half-read links.",
   },
 ];
 
