@@ -1,5 +1,8 @@
 import type { AppConfig } from "@/lib/core/config/app-config";
-import { parseLensCommand } from "@/lib/core/config/lens-commands";
+import {
+  parseLensCommand,
+  type LensCommand,
+} from "@/lib/core/config/lens-commands";
 import type { ModelEntry } from "@/lib/core/config/model-label";
 import {
   DEFAULT_WEB_TOOLS_CONFIG,
@@ -164,25 +167,29 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
-/** A /command only locks the lens for the turn it's typed in — check the latest message, not history. */
-function detectLens(messages: Message[]) {
+/**
+ * Slash /command on the latest user turn wins; otherwise fall back to the
+ * sticky lens selected via the composer pills.
+ */
+function detectLens(messages: Message[], preferred?: LensCommand) {
   const latest = messages[messages.length - 1];
   if (!latest || latest.role !== "user") {
-    return undefined;
+    return preferred;
   }
-  return parseLensCommand(getMessageText(latest.content));
+  return parseLensCommand(getMessageText(latest.content)) ?? preferred;
 }
 
 function toApiMessages(
   messages: Message[],
   webToolsActive: boolean,
+  lens?: LensCommand,
 ): ApiMessage[] {
   const apiMessages: ApiMessage[] = [
     {
       role: "system",
       content: buildSystemPrompt({
         webToolsActive,
-        lens: detectLens(messages),
+        lens: detectLens(messages, lens),
       }),
     },
   ];
@@ -204,6 +211,7 @@ function buildChatCompletionBody({
   webToolsConfig,
   attachWebTools,
   extraMessages = [],
+  lens,
 }: {
   model: string;
   messages: Message[];
@@ -211,6 +219,7 @@ function buildChatCompletionBody({
   webToolsConfig: WebToolsConfig;
   attachWebTools: boolean;
   extraMessages?: Record<string, unknown>[];
+  lens?: LensCommand;
 }): { body: Record<string, unknown>; webToolsActive: boolean } {
   const nativeToolsActive =
     attachWebTools && webToolsActiveForRequest(model, webToolsConfig);
@@ -220,7 +229,10 @@ function buildChatCompletionBody({
   const body: Record<string, unknown> = {
     model,
     stream,
-    messages: [...toApiMessages(messages, webToolsActive), ...extraMessages],
+    messages: [
+      ...toApiMessages(messages, webToolsActive, lens),
+      ...extraMessages,
+    ],
   };
 
   if (nativeToolsActive) {
@@ -329,14 +341,18 @@ async function runFallbackToolLoop({
   messages,
   webToolsConfig,
   signal,
+  lens,
 }: {
   config: AppConfig;
   messages: Message[];
   webToolsConfig: WebToolsConfig;
   signal?: AbortSignal;
+  lens?: LensCommand;
 }): Promise<Record<string, unknown>[]> {
   const model = requireModelName(config);
-  const wire: Record<string, unknown>[] = [...toApiMessages(messages, true)];
+  const wire: Record<string, unknown>[] = [
+    ...toApiMessages(messages, true, lens),
+  ];
   const extras: Record<string, unknown>[] = [];
   const { url, headers } = resolveRequestTarget("chat/completions");
 
@@ -476,6 +492,7 @@ async function completeChat({
   webToolsConfig,
   attachWebTools,
   extraMessages,
+  lens,
 }: {
   config: AppConfig;
   messages: Message[];
@@ -483,6 +500,7 @@ async function completeChat({
   webToolsConfig: WebToolsConfig;
   attachWebTools: boolean;
   extraMessages?: Record<string, unknown>[];
+  lens?: LensCommand;
 }): Promise<{ content: string; usage: ChatMessageUsage }> {
   const comboModel = requireModelName(config);
   const { url, headers } = resolveRequestTarget("chat/completions");
@@ -493,6 +511,7 @@ async function completeChat({
     webToolsConfig,
     attachWebTools,
     extraMessages,
+    lens,
   });
   const response = await fetchWithTimeout(url, {
     method: "POST",
@@ -547,6 +566,7 @@ async function* streamChatAttempt({
   webToolsConfig,
   attachWebTools,
   extraMessages,
+  lens,
 }: {
   config: AppConfig;
   messages: Message[];
@@ -554,6 +574,7 @@ async function* streamChatAttempt({
   webToolsConfig: WebToolsConfig;
   attachWebTools: boolean;
   extraMessages?: Record<string, unknown>[];
+  lens?: LensCommand;
 }): AsyncGenerator<ChatStreamEvent> {
   const comboModel = requireModelName(config);
   const { url, headers } = resolveRequestTarget("chat/completions");
@@ -564,6 +585,7 @@ async function* streamChatAttempt({
     webToolsConfig,
     attachWebTools,
     extraMessages,
+    lens,
   });
   const response = await fetchWithTimeout(url, {
     method: "POST",
@@ -631,6 +653,7 @@ async function* streamChatAttempt({
       webToolsConfig,
       attachWebTools,
       extraMessages,
+      lens,
     });
     if (!result.content.trim()) {
       throw new ChatApiError("unknown");
@@ -651,11 +674,14 @@ export async function* streamChat({
   messages,
   signal,
   webToolsConfig = DEFAULT_WEB_TOOLS_CONFIG,
+  lens,
 }: {
   config: AppConfig;
   messages: Message[];
   signal?: AbortSignal;
   webToolsConfig?: WebToolsConfig;
+  /** Sticky lens from the composer pills; slash /command on the turn still wins. */
+  lens?: LensCommand;
 }): AsyncGenerator<ChatStreamEvent> {
   let attempt = 0;
   let toolsDisabled = false;
@@ -677,6 +703,7 @@ export async function* streamChat({
         messages,
         webToolsConfig,
         signal,
+        lens,
       });
     } catch {
       extraMessages = [];
@@ -693,6 +720,7 @@ export async function* streamChat({
         webToolsConfig,
         attachWebTools: !toolsDisabled,
         extraMessages,
+        lens,
       })) {
         if (event.type === "delta") {
           produced = true;

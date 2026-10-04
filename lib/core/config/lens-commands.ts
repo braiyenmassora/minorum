@@ -1,9 +1,9 @@
-export type LensCommand =
-  "engineer" | "architect" | "data" | "cto" | "research";
+export type LensCommand = "engineer" | "cto" | "research";
 
 export type LensCommandDefinition = {
   command: LensCommand;
   trigger: `/${LensCommand}`;
+  label: string;
   description: string;
 };
 
@@ -11,26 +11,19 @@ export const LENS_COMMANDS: readonly LensCommandDefinition[] = [
   {
     command: "engineer",
     trigger: "/engineer",
-    description: "Squash. Prove. Ship.",
-  },
-  {
-    command: "architect",
-    trigger: "/architect",
-    description: "Big-picture energy.",
-  },
-  {
-    command: "data",
-    trigger: "/data",
-    description: "Data's on fire.",
+    label: "engineer",
+    description: "Code + data. Squash. Prove. Ship.",
   },
   {
     command: "cto",
     trigger: "/cto",
-    description: "Business brain on.",
+    label: "cto",
+    description: "Architecture + strategy. Big-picture on.",
   },
   {
     command: "research",
     trigger: "/research",
+    label: "research",
     description: "Receipts or bust.",
   },
 ];
