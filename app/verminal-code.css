@@ -1,14 +1,15 @@
-/* Code block — Cursor / VS Code Dark+ style (pure black canvas) */
+/* Code block — soft dark-gray canvas (not pure black) for easier scanning */
 
 .verminal-code {
   color-scheme: dark;
+  --verminal-bg: #1a1a1a;
 }
 
 .verminal-code__shell {
   overflow: hidden;
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-standard);
-  background: #000000;
+  background: var(--verminal-bg);
 }
 
 .verminal-code__header {
@@ -17,7 +18,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.875rem 1rem 0.5rem;
-  background: #000000;
+  background: var(--verminal-bg);
 }
 
 .verminal-code__lang {
@@ -41,8 +42,8 @@
   margin: 0;
   overflow: auto;
   padding: 0 1rem 1.25rem;
-  background: #000000;
-  color: #e0e0e0;
+  background: var(--verminal-bg);
+  color: #e4e6ea;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
   -webkit-overflow-scrolling: touch;
@@ -61,7 +62,7 @@
 .verminal-code .hljs {
   display: block;
   background: transparent;
-  color: #e0e0e0;
+  color: #e4e6ea;
   font-family:
     var(--font-fira-code), "Fira Code", ui-monospace, "Cascadia Code", Consolas,
     monospace;
@@ -75,54 +76,59 @@
   -moz-osx-font-smoothing: auto;
 }
 
-/* Comment — muted gray */
+/* Comment — muted blue-gray */
 .verminal-code .hljs-comment,
 .verminal-code .hljs-quote {
-  color: #6e7681;
+  color: #818898;
   font-style: italic;
   font-weight: 400;
 }
 
-/* Keyword — function, const, return, … */
+/* Keyword — import, from, def, return, … */
 .verminal-code .hljs-keyword,
-.verminal-code .hljs-selector-tag,
-.verminal-code .hljs-literal {
-  color: #c586c0;
+.verminal-code .hljs-selector-tag {
+  color: #c77dff;
   font-weight: 600;
 }
 
-/* String — green */
+/* Literal — True / False / None */
+.verminal-code .hljs-literal {
+  color: #5eeded;
+  font-weight: 600;
+}
+
+/* String — bright green */
 .verminal-code .hljs-string,
 .verminal-code .hljs-regexp {
-  color: #6a9955;
+  color: #9be963;
   font-weight: 500;
 }
 
 /* Template literal — green shell, gold interpolation */
 .verminal-code .hljs-template-variable,
 .verminal-code .hljs-template-tag {
-  color: #dcdcaa;
+  color: #f7d589;
   font-weight: 500;
 }
 
-/* Number — pink/salmon */
+/* Number — warm orange */
 .verminal-code .hljs-number {
-  color: #f07178;
+  color: #f7ab5f;
   font-weight: 500;
 }
 
-/* Function name */
+/* Function name — light blue */
 .verminal-code .hljs-title,
 .verminal-code .hljs-title.function_,
 .verminal-code .hljs-section {
-  color: #dcdcaa;
+  color: #7ab8ff;
   font-weight: 600;
 }
 
-/* Type / class */
+/* Type / class — teal */
 .verminal-code .hljs-type,
 .verminal-code .hljs-class .hljs-title {
-  color: #4ec9b0;
+  color: #5fd4c4;
   font-weight: 600;
 }
 
@@ -132,45 +138,45 @@
 .verminal-code .hljs-property,
 .verminal-code .hljs-attr,
 .verminal-code .hljs-attribute {
-  color: #e0e0e0;
+  color: #e4e6ea;
   font-weight: 500;
 }
 
 /* Built-in globals — window, document, … */
 .verminal-code .hljs-built_in,
 .verminal-code .hljs-title.class_ {
-  color: #f07178;
+  color: #f78c6c;
   font-weight: 500;
 }
 
 /* Tags / names */
 .verminal-code .hljs-name,
 .verminal-code .hljs-tag {
-  color: #569cd6;
+  color: #7ab8ff;
   font-weight: 600;
 }
 
 .verminal-code .hljs-symbol,
 .verminal-code .hljs-deletion {
-  color: #e0e0e0;
+  color: #e4e6ea;
   text-decoration: line-through;
 }
 
 /* Operators & punctuation */
 .verminal-code .hljs-operator,
 .verminal-code .hljs-punctuation {
-  color: #d4d4d4;
+  color: #c8ccd6;
   font-weight: 500;
 }
 
 .verminal-code .hljs-meta,
 .verminal-code .hljs-meta .hljs-keyword {
-  color: #c586c0;
+  color: #c77dff;
   font-weight: 600;
 }
 
 .verminal-code .hljs-addition {
-  color: #6a9955;
+  color: #9be963;
 }
 
 .verminal-code .hljs-emphasis {
