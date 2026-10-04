@@ -156,10 +156,7 @@ export function ChatBubble({
         ) : (
           <div className="w-full min-w-0 text-token-body leading-[var(--chat-markdown-line-height)] text-text-primary">
             <ChatMarkdown content={text} />
-            <ChatMessageActions
-              messageId={message.id}
-              text={normalizeAssistantMarkdown(text)}
-            />
+            <ChatMessageActions text={normalizeAssistantMarkdown(text)} />
           </div>
         )
       ) : null}
