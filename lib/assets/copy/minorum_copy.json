@@ -1,75 +1,75 @@
 {
   "app_meta": {
     "app_name": "Minorum",
-    "tagline": "Answers fast. Judges your code a little."
+    "tagline": "Fast answers. Mild judgment."
   },
   "chat_screen_input_header": {
-    "model_prefix": "Model:",
-    "new_chat": "New chat",
-    "attach_image": "Attach image",
-    "attach_document": "Attach file",
-    "open_history": "Chats",
-    "placeholder": "Type a message…",
-    "attachment_warning_image": "This model's blind to images — it'll just shrug.",
-    "attachment_warning_pdf": "This model can't read PDFs — it'll just shrug."
+    "model_prefix": "Brain:",
+    "new_chat": "Fresh start",
+    "attach_image": "Drop image",
+    "attach_document": "Drop file",
+    "open_history": "Past chats",
+    "placeholder": "Ask anything. Bugs welcome…",
+    "attachment_warning_image": "Can't see images. Shrug.",
+    "attachment_warning_pdf": "Can't read PDFs. Shrug."
   },
   "chat_history_sidebar": {
     "title": "Minorum",
-    "new_chat": "New chat",
-    "clear_all": "Clear all chats",
-    "clear_all_confirm_body": "All of it, gone for good. Your API config's safe.",
-    "clear_all_confirm": "Delete all",
-    "clear_all_cancel": "Cancel",
-    "delete_confirm_body": "Gone for good. No take-backs.",
-    "delete_confirm": "Delete",
-    "delete_cancel": "Cancel",
-    "empty": "Nothing here. Yet.",
-    "search_placeholder": "Search chats",
-    "no_search_results": "Nothing matches that.",
+    "new_chat": "Fresh start",
+    "clear_all": "Nuke all chats",
+    "clear_all_confirm_body": "All gone. Config survives.",
+    "clear_all_confirm": "Nuke 'em",
+    "clear_all_cancel": "Wait, no",
+    "delete_confirm_body": "Gone forever. No undo.",
+    "delete_confirm": "Delete it",
+    "delete_cancel": "Keep it",
+    "empty": "Empty. Go break something.",
+    "search_placeholder": "Find that chat…",
+    "no_search_results": "Nada. Try again.",
     "pinned_section": "Pinned",
-    "pin": "Pin chat",
-    "unpin": "Unpin chat",
+    "pin": "Pin it",
+    "unpin": "Unpin",
     "delete": "Delete",
     "close": "Close",
     "account": "Profile"
   },
   "system_status": {
-    "checking": "Checking…"
+    "checking": "Poking server…"
   },
   "chat_bubble": {
-    "read_more": "Read more",
-    "show_less": "Show less",
+    "read_more": "Keep reading",
+    "show_less": "Less, please",
     "copy": "Copy",
-    "retry": "Retry"
+    "retry": "Try again"
   },
   "chat_screen_reset_bottom_sheet": {
-    "title": "Reset chat?",
-    "body": "Everything here, gone. Your API config's untouched.",
-    "confirm": "Reset",
-    "cancel": "Cancel"
+    "title": "Start over?",
+    "body": "Chat wiped. Config stays.",
+    "confirm": "Wipe it",
+    "cancel": "Nope"
   },
   "pilih_model_bottom_sheet": {
-    "title": "Select model",
-    "loading": "Loading models…",
-    "empty": "No models found. Weird.",
+    "title": "Pick a brain",
+    "loading": "Rounding up models…",
+    "empty": "No models. Check config?",
     "search_hint": "Search models",
     "close": "Close"
   },
   "error_and_snackbar_messages": {
-    "auth": "Invalid API key or URL",
-    "network": "Connection lost",
-    "server": "Server's acting up",
-    "timeout": "Request timed out",
-    "unknown": "Something broke. Not sure what.",
-    "config_incomplete": "Complete URL, key, and model first",
-    "profile_required": "Enter your full name first",
-    "test_connection_required": "Test the connection before continuing",
-    "unsupported_file": "Unsupported file type",
-    "file_too_large": "File too large (max 8MB)",
-    "payload_too_large": "Request too large — try a smaller file",
-    "not_an_image": "Not an image file",
-    "wrong_password": "Wrong password",
-    "connection_failed": "Connection failed",
-    "api_config_missing": "Server API config missing"
+    "auth": "Bad key or URL.",
+    "network": "Internet ghosted us.",
+    "server": "Server's having a moment.",
+    "timeout": "Too slow. Retry?",
+    "unknown": "Something broke. No clue.",
+    "config_incomplete": "Need URL, key, model.",
+    "profile_required": "Full name first, please.",
+    "test_connection_required": "Test connection first.",
+    "unsupported_file": "Can't read this file.",
+    "file_too_large": "Too chonky. Max 8MB.",
+    "payload_too_large": "Too much. Go smaller.",
+    "not_an_image": "Not an image. Nice try.",
+    "wrong_password": "Wrong password. Again?",
+    "connection_failed": "Can't connect. Check URL/key.",
+    "api_config_missing": "Server config missing."
   }
 }

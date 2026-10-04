@@ -11,32 +11,27 @@ export const LENS_COMMANDS: readonly LensCommandDefinition[] = [
   {
     command: "engineer",
     trigger: "/engineer",
-    description:
-      "Straight to the bug — root cause, fix, and proof it works. No scenic detour through architecture land.",
+    description: "Squash. Prove. Ship.",
   },
   {
     command: "architect",
     trigger: "/architect",
-    description:
-      "Zooms out: system design, integration, trade-offs — plus the ADR nobody reads but should.",
+    description: "Big-picture energy.",
   },
   {
     command: "data",
     trigger: "/data",
-    description:
-      "Data modeling, layering, governance, cost — basically where your data lives and why it's on fire.",
+    description: "Data's on fire.",
   },
   {
     command: "cto",
     trigger: "/cto",
-    description:
-      "Business-brain mode: build vs buy, budget, risk, and the roadmap you'll defend in standup.",
+    description: "Business brain on.",
   },
   {
     command: "research",
     trigger: "/research",
-    description:
-      "Real sources, real citations, an actual conclusion — not just a pile of half-read links.",
+    description: "Receipts or bust.",
   },
 ];
 
