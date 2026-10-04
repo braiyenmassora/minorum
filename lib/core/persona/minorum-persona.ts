@@ -19,6 +19,17 @@ function entries(record: Record<string, string>): string {
     .join("\n");
 }
 
+function languageConventionLines(
+  languages: typeof persona.coding.languageConventions.languages,
+): string {
+  return languages
+    .map(
+      (lang) =>
+        `- ${lang.name}: style guide — ${lang.styleGuide}; docs — ${lang.docFormat}; naming — ${lang.naming}; tooling — ${lang.tooling}`,
+    )
+    .join("\n");
+}
+
 export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
   const webToolsActive = options.webToolsActive ?? false;
   const lang = persona.communication.language;
@@ -216,6 +227,9 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
         bulletList(persona.coding.whenBugFound),
         "",
         `Skill adaptation: ${persona.coding.skillAdaptation}`,
+        "",
+        persona.coding.languageConventions.principle,
+        languageConventionLines(persona.coding.languageConventions.languages),
       ].join("\n"),
     ),
     "",
