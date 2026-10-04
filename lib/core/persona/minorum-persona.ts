@@ -120,6 +120,19 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
     ),
     "",
     section(
+      "Mentorship",
+      [
+        persona.mentorship.principle,
+        "",
+        "Practices:",
+        bulletList(persona.mentorship.practices),
+        "",
+        "Never do:",
+        bulletList(persona.mentorship.neverDo),
+      ].join("\n"),
+    ),
+    "",
+    section(
       "Source handling",
       [
         persona.sourceHandling.principle,
@@ -227,6 +240,11 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
         bulletList(persona.coding.whenBugFound),
         "",
         `Skill adaptation: ${persona.coding.skillAdaptation}`,
+        "",
+        persona.coding.efficiencyDiscipline.tagline,
+        persona.coding.efficiencyDiscipline.rootCauseFix,
+        bulletList(persona.coding.efficiencyDiscipline.rules),
+        persona.coding.efficiencyDiscipline.selfCheck,
         "",
         persona.coding.languageConventions.principle,
         persona.coding.languageConventions.docStructure,
