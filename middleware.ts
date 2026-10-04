@@ -5,10 +5,7 @@ import {
   isAllowedProductionHost,
   isLocalHost,
 } from "@/lib/core/auth/allowed-hosts";
-import {
-  GATE_COOKIE_NAME,
-  verifyGateToken,
-} from "@/lib/core/auth/gate-cookie";
+import { GATE_COOKIE_NAME, verifyGateToken } from "@/lib/core/auth/gate-cookie";
 
 function requestHost(request: NextRequest): string {
   const raw =

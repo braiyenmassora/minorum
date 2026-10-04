@@ -13,20 +13,20 @@ type SystemStatusIndicatorProps = {
 
 const DOT_BY_TONE: Record<StatusTone, string> = {
   neutral: "bg-text-muted",
-  success: "bg-[var(--color-success)]",
-  warning: "bg-[var(--color-warning)]",
-  severe: "bg-[var(--color-severe)]",
-  danger: "bg-[var(--color-error)]",
-  info: "bg-[var(--color-info)]",
+  success: "bg-success",
+  warning: "bg-warning",
+  severe: "bg-severe",
+  danger: "bg-error",
+  info: "bg-info",
 };
 
 const TEXT_BY_TONE: Record<StatusTone, string> = {
   neutral: "text-text-muted",
-  success: "text-[var(--color-success)]",
-  warning: "text-[var(--color-warning)]",
-  severe: "font-medium text-[var(--color-severe)]",
+  success: "text-success",
+  warning: "text-warning",
+  severe: "font-medium text-severe",
   danger: "font-medium text-error",
-  info: "text-[var(--color-info)]",
+  info: "text-info",
 };
 
 export function SystemStatusIndicator({

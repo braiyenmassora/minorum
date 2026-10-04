@@ -38,7 +38,7 @@ async function logoutAndReset(): Promise<void> {
   }
 }
 
-/** Pull apiBaseUrl/apiKey from server .env so localStorage doesn't keep stale credentials. */
+/** Pull apiBaseUrl from server .env so localStorage doesn't keep a stale value. */
 async function syncConfigFromServer(loaded: AppConfig): Promise<{
   config: AppConfig;
   webTools: WebToolsConfig;
@@ -55,22 +55,16 @@ async function syncConfigFromServer(loaded: AppConfig): Promise<{
       ok?: boolean;
       config?: {
         apiBaseUrl?: string;
-        apiKey?: string;
         preferredModel?: string;
       };
       webTools?: WebToolsConfig;
     };
-    if (
-      payload.ok !== true ||
-      !payload.config?.apiBaseUrl ||
-      !payload.config.apiKey
-    ) {
+    if (payload.ok !== true || !payload.config?.apiBaseUrl) {
       return { config: loaded, webTools: DEFAULT_WEB_TOOLS_CONFIG };
     }
 
     const synced = validateAppConfig({
       apiBaseUrl: payload.config.apiBaseUrl,
-      apiKey: payload.config.apiKey,
       modelName:
         loaded.modelName.trim() || payload.config.preferredModel?.trim() || "",
       fullName: loaded.fullName,

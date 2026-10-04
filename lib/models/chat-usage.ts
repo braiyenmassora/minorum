@@ -13,10 +13,7 @@ export type ChatMessageUsage = ChatTokenUsage & {
 export function formatChatUsageMeta(usage: ChatMessageUsage): string {
   const parts: string[] = [usage.comboModel];
 
-  if (
-    usage.servedModel &&
-    usage.servedModel !== usage.comboModel
-  ) {
+  if (usage.servedModel && usage.servedModel !== usage.comboModel) {
     parts.push(usage.servedModel);
   }
 
@@ -46,11 +43,7 @@ export function parseUsageField(raw: unknown): ChatTokenUsage | null {
   const totalTokens =
     typeof usage.total_tokens === "number" ? usage.total_tokens : undefined;
 
-  if (
-    promptTokens == null &&
-    completionTokens == null &&
-    totalTokens == null
-  ) {
+  if (promptTokens == null && completionTokens == null && totalTokens == null) {
     return null;
   }
 

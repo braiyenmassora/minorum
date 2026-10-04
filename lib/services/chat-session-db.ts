@@ -1,6 +1,9 @@
 import { neon } from "@neondatabase/serverless";
 
-import { CHAT_HISTORY_LIMIT, type ChatSession } from "@/lib/models/chat-session";
+import {
+  CHAT_HISTORY_LIMIT,
+  type ChatSession,
+} from "@/lib/models/chat-session";
 import type { Message } from "@/lib/models/message";
 
 /** Single-user for now — sessions.user_id references this seeded row. */

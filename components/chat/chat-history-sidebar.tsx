@@ -5,6 +5,7 @@ import { Eraser, LogOut, Pin, PinOff, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AppLogo } from "@/components/ui/app-logo";
+import { IconButton } from "@/components/ui/icon-button";
 import { ResetChatPanel } from "@/components/chat/reset-chat-panel";
 import { ThemeToggleButton } from "@/components/ui/theme-toggle-button";
 import { SystemStatusIndicator } from "@/components/chat/system-status-indicator";
@@ -124,6 +125,9 @@ export function ChatHistorySidebar({
   const copy = getAppCopy().chat_history_sidebar;
   const displayName = accountName?.trim() || copy.account;
   const [confirmingClearAll, setConfirmingClearAll] = useState(false);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(
+    null,
+  );
   const [query, setQuery] = useState("");
 
   const filteredSessions = useMemo(() => {
@@ -161,25 +165,25 @@ export function ChatHistorySidebar({
           </h2>
         </div>
         <div className="flex shrink-0 items-center gap-inline-2xs">
-          <button
-            type="button"
-            className="icon-btn-responsive inline-flex items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-error disabled:opacity-40"
+          <IconButton
+            size="responsive"
+            tone="danger"
+            className="disabled:opacity-40"
             onClick={() => setConfirmingClearAll(true)}
             disabled={sessions.length === 0}
             aria-label={copy.clear_all}
             title={copy.clear_all}
           >
             <Eraser className="size-4" />
-          </button>
-          <button
-            type="button"
-            className="icon-btn-responsive inline-flex items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text-primary"
+          </IconButton>
+          <IconButton
+            size="responsive"
             onClick={onNewChat}
             aria-label={copy.new_chat}
             title={copy.new_chat}
           >
             <Plus className="size-4" />
-          </button>
+          </IconButton>
           <ThemeToggleButton />
         </div>
       </div>
@@ -193,6 +197,20 @@ export function ChatHistorySidebar({
         onConfirm={() => {
           setConfirmingClearAll(false);
           onClearAll();
+        }}
+      />
+
+      <ResetChatPanel
+        open={confirmingDeleteId !== null}
+        body={copy.delete_confirm_body}
+        confirmLabel={copy.delete_confirm}
+        cancelLabel={copy.delete_cancel}
+        onCancel={() => setConfirmingDeleteId(null)}
+        onConfirm={() => {
+          if (confirmingDeleteId) {
+            onDelete(confirmingDeleteId);
+          }
+          setConfirmingDeleteId(null);
         }}
       />
 
@@ -233,7 +251,7 @@ export function ChatHistorySidebar({
                       isActive={session.id === activeSessionId}
                       copy={copy}
                       onSelect={onSelect}
-                      onDelete={onDelete}
+                      onDelete={setConfirmingDeleteId}
                       onTogglePin={onTogglePin}
                     />
                   ))}
@@ -248,7 +266,7 @@ export function ChatHistorySidebar({
                   isActive={session.id === activeSessionId}
                   copy={copy}
                   onSelect={onSelect}
-                  onDelete={onDelete}
+                  onDelete={setConfirmingDeleteId}
                   onTogglePin={onTogglePin}
                 />
               ))}
@@ -276,15 +294,15 @@ export function ChatHistorySidebar({
               <SystemStatusIndicator status={systemStatus} className="mt-0.5" />
             </span>
           </div>
-          <button
-            type="button"
-            className="icon-btn-responsive inline-flex shrink-0 items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-error"
+          <IconButton
+            size="responsive"
+            tone="danger"
             onClick={onLogout}
             aria-label="Logout"
             title="Logout"
           >
             <LogOut className="size-3.5" />
-          </button>
+          </IconButton>
         </div>
       </div>
     </aside>

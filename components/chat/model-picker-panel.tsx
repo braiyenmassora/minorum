@@ -88,7 +88,7 @@ export function ModelPickerPanel({ config, onSelect }: ModelPickerPanelProps) {
     };
     // Only refetch on credential change or explicit retry.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.apiBaseUrl, config.apiKey, reloadKey]);
+  }, [config.apiBaseUrl, reloadKey]);
 
   // Focus search as soon as the list is ready so keyboard users can filter.
   useEffect(() => {
@@ -132,7 +132,10 @@ export function ModelPickerPanel({ config, onSelect }: ModelPickerPanelProps) {
       ) : null}
 
       {loadFailed ? (
-        <div role="alert" className="flex items-center gap-inline px-[var(--spacing-xs)] py-[calc(var(--spacing-xs)+2px)]">
+        <div
+          role="alert"
+          className="flex items-center gap-inline px-[var(--spacing-xs)] py-[calc(var(--spacing-xs)+2px)]"
+        >
           <p className="text-token-body-medium text-text-secondary">
             Couldn&apos;t load models.
           </p>

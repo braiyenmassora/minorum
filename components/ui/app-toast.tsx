@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { publishToast, subscribeToast } from "@/lib/toast-bus";
@@ -10,19 +16,24 @@ export function showAppToast(message: string) {
   publishToast(message);
 }
 
+/** True once hydrated on the client — portal targets (document.body) don't exist during SSR. */
+function useHasMounted(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
 export function AppToastHost() {
   const [message, setMessage] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHasMounted();
   const timerRef = useRef<number | null>(null);
 
   const dismiss = useCallback(() => {
     setVisible(false);
     window.setTimeout(() => setMessage(null), 200);
-  }, []);
-
-  useEffect(() => {
-    setMounted(true);
   }, []);
 
   useEffect(() => {

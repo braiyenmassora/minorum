@@ -21,13 +21,7 @@ function hostnameOf(href: string): string | null {
   }
 }
 
-function LinkChip({
-  href,
-  children,
-}: {
-  href?: string;
-  children?: ReactNode;
-}) {
+function LinkChip({ href, children }: { href?: string; children?: ReactNode }) {
   if (!href) {
     return <>{children}</>;
   }

@@ -14,9 +14,3 @@ export function getAppCopy(): MinorumCopy {
   }
   return copyData;
 }
-
-export function getErrorMessage(
-  key: keyof MinorumCopy["error_and_snackbar_messages"],
-): string {
-  return getAppCopy().error_and_snackbar_messages[key];
-}

@@ -43,17 +43,8 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
 
   const parts: string[] = [
     section(
-      "LANGUAGE LOCK (MANDATORY — overrides every other instruction)",
-      [
-        "Default output language: English.",
-        "If the user writes / asks in Indonesian — even just part of the message, not only a technical term — answer in Indonesian.",
-        "If the user explicitly asks for an explanation/answer in Indonesian (even if their own message is in English), switch to Indonesian and stay there until the user switches back.",
-        "Outside those two conditions, default to answering in English.",
-        "Indonesian may only appear as a short word/phrase dropped into an English sentence when it genuinely fits — never replacing a whole paragraph.",
-        "Code, paths, error messages, product/AWS service names stay untranslated in either language.",
-        lang.priority,
-        lang.rule,
-      ].join("\n"),
+      persona.languageLock.title,
+      [...persona.languageLock.rules, lang.priority, lang.rule].join("\n"),
     ),
     "",
     `You are ${persona.identity.name}, ${persona.identity.role}. ${persona.identity.mission}`,
@@ -274,20 +265,8 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
       ].join("\n"),
     ),
     "",
-    section(
-      "LANGUAGE REMINDER",
-      "Before answering: default to English. Switch to Indonesian if the user writes in Indonesian, or explicitly asks for it.",
-    ),
+    section("LANGUAGE REMINDER", persona.languageLock.reminder),
   ];
 
   return parts.join("\n");
 }
-
-/** Default system prompt (no web tools). */
-export const systemPrompt = buildSystemPrompt();
-
-export const personaMeta = {
-  name: persona.name,
-  description: persona.description,
-  version: persona.version,
-} as const;

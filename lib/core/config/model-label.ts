@@ -1,7 +1,31 @@
+export type ModelCapabilities = {
+  vision?: boolean;
+  pdf?: boolean;
+};
+
 export type ModelEntry = {
   id: string;
   ownedBy?: string;
+  /** From 9Router's /models response — undefined fields mean "unknown", not "false". */
+  capabilities?: ModelCapabilities;
 };
+
+/**
+ * True only when the model's catalog entry explicitly says it lacks the
+ * capability — unknown/missing data never warns, since 9Router's "combo"
+ * routing can land on a different underlying model per request anyway (the
+ * catalog flag is a hint, not a guarantee).
+ */
+export function attachmentUnsupportedBy(
+  entry: ModelEntry | undefined,
+  kind: "image" | "pdf",
+): boolean {
+  const capabilities = entry?.capabilities;
+  if (!capabilities) {
+    return false;
+  }
+  return (kind === "image" ? capabilities.vision : capabilities.pdf) === false;
+}
 
 export function getModelDisplayName(modelName: string): string {
   const trimmed = modelName.trim();
@@ -67,16 +91,6 @@ export function resolveModelSelection(
   }
 
   return pickDefaultModel(models, preferred, comboIds);
-}
-
-/** Combos first, then the rest (legacy flat list helpers). */
-export function sortModelsForDisplay(
-  models: string[],
-  comboIds: string[] = [],
-): string[] {
-  const combos = models.filter((id) => isComboModelId(id, comboIds));
-  const rest = models.filter((id) => !isComboModelId(id, comboIds));
-  return [...combos, ...rest];
 }
 
 export function comboIdsFromEntries(entries: ModelEntry[]): string[] {

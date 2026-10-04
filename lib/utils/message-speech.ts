@@ -91,10 +91,7 @@ function playViaBrowser(messageId: string, text: string): void {
   window.speechSynthesis.speak(utterance);
 }
 
-async function playViaRouter(
-  messageId: string,
-  text: string,
-): Promise<void> {
+async function playViaRouter(messageId: string, text: string): Promise<void> {
   const controller = new AbortController();
   fetchAbort = controller;
 
@@ -169,7 +166,7 @@ export async function toggleMessageSpeech(
     if (error instanceof DOMException && error.name === "AbortError") {
       return;
     }
-    // ponytail: router down → browser voices (ceiling: quality drop)
+    // Router unreachable → fall back to browser TTS (lower voice quality).
     if (activeMessageId === messageId) {
       playViaBrowser(messageId, spoken);
     }

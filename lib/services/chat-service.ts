@@ -1,9 +1,4 @@
-import {
-  buildChatCompletionsUrl,
-  buildModelsUrl,
-  normalizeApiBaseUrl,
-  type AppConfig,
-} from "@/lib/core/config/app-config";
+import type { AppConfig } from "@/lib/core/config/app-config";
 import type { ModelEntry } from "@/lib/core/config/model-label";
 import {
   DEFAULT_WEB_TOOLS_CONFIG,
@@ -119,40 +114,16 @@ async function readWithIdleTimeout(
 
 type FetchOptions = RequestInit & { timeoutMs?: number };
 
-function authHeaders(apiKey: string): HeadersInit {
-  return {
-    Authorization: `Bearer ${apiKey}`,
-    "Content-Type": "application/json",
-  };
-}
-
 type ApiEndpoint = "models" | "chat/completions" | "search" | "web/fetch";
 
-function resolveRequestTarget(
-  config: AppConfig,
-  endpoint: ApiEndpoint,
-): { url: string; headers: HeadersInit } {
-  // Browser: same-origin proxy — auth & upstream URL injected server-side.
-  if (typeof window !== "undefined") {
-    return {
-      url: `/api/proxy/${endpoint}`,
-      headers: { "Content-Type": "application/json" },
-    };
-  }
-
-  if (endpoint === "models") {
-    return { url: buildModelsUrl(config.apiBaseUrl), headers: authHeaders(config.apiKey) };
-  }
-  if (endpoint === "chat/completions") {
-    return {
-      url: buildChatCompletionsUrl(config.apiBaseUrl),
-      headers: authHeaders(config.apiKey),
-    };
-  }
-
+/** Same-origin proxy — auth & upstream URL are injected server-side. */
+function resolveRequestTarget(endpoint: ApiEndpoint): {
+  url: string;
+  headers: HeadersInit;
+} {
   return {
-    url: `${normalizeApiBaseUrl(config.apiBaseUrl)}/${endpoint}`,
-    headers: authHeaders(config.apiKey),
+    url: `/api/proxy/${endpoint}`,
+    headers: { "Content-Type": "application/json" },
   };
 }
 
@@ -233,10 +204,7 @@ function buildChatCompletionBody({
   const body: Record<string, unknown> = {
     model,
     stream,
-    messages: [
-      ...toApiMessages(messages, webToolsActive),
-      ...extraMessages,
-    ],
+    messages: [...toApiMessages(messages, webToolsActive), ...extraMessages],
   };
 
   if (nativeToolsActive) {
@@ -263,7 +231,6 @@ type FallbackToolCall = {
 };
 
 async function executeFallbackTool(
-  config: AppConfig,
   toolCall: FallbackToolCall,
   webToolsConfig: WebToolsConfig,
   signal?: AbortSignal,
@@ -286,7 +253,7 @@ async function executeFallbackTool(
       }
       const maxResults =
         typeof args.max_results === "number" ? args.max_results : 5;
-      const { url, headers } = resolveRequestTarget(config, "search");
+      const { url, headers } = resolveRequestTarget("search");
       const response = await fetchWithTimeout(url, {
         method: "POST",
         headers,
@@ -309,7 +276,7 @@ async function executeFallbackTool(
       if (!targetUrl) {
         return JSON.stringify({ error: "Missing url" });
       }
-      const { url, headers } = resolveRequestTarget(config, "web/fetch");
+      const { url, headers } = resolveRequestTarget("web/fetch");
       const response = await fetchWithTimeout(url, {
         method: "POST",
         headers,
@@ -355,7 +322,7 @@ async function runFallbackToolLoop({
   const model = requireModelName(config);
   const wire: Record<string, unknown>[] = [...toApiMessages(messages, true)];
   const extras: Record<string, unknown>[] = [];
-  const { url, headers } = resolveRequestTarget(config, "chat/completions");
+  const { url, headers } = resolveRequestTarget("chat/completions");
 
   for (let round = 0; round < MAX_FALLBACK_TOOL_ROUNDS; round += 1) {
     const response = await fetchWithTimeout(url, {
@@ -400,12 +367,7 @@ async function runFallbackToolLoop({
     extras.push(assistantTurn);
 
     for (const call of toolCalls) {
-      const result = await executeFallbackTool(
-        config,
-        call,
-        webToolsConfig,
-        signal,
-      );
+      const result = await executeFallbackTool(call, webToolsConfig, signal);
       const toolMessage = {
         role: "tool",
         tool_call_id: call.id,
@@ -430,7 +392,7 @@ export async function fetchModelEntries(
   config: AppConfig,
   signal?: AbortSignal,
 ): Promise<ModelEntry[]> {
-  const { url, headers } = resolveRequestTarget(config, "models");
+  const { url, headers } = resolveRequestTarget("models");
   const response = await fetchWithTimeout(url, {
     method: "GET",
     headers,
@@ -438,7 +400,11 @@ export async function fetchModelEntries(
   });
 
   const data = await parseJsonResponse<{
-    data?: Array<{ id?: string; owned_by?: string }>;
+    data?: Array<{
+      id?: string;
+      owned_by?: string;
+      capabilities?: { vision?: boolean; pdf?: boolean };
+    }>;
   }>(response);
 
   if (!Array.isArray(data.data)) {
@@ -455,6 +421,18 @@ export async function fetchModelEntries(
     entries.push({
       id: model.id,
       ownedBy: typeof model.owned_by === "string" ? model.owned_by : undefined,
+      capabilities: model.capabilities
+        ? {
+            vision:
+              typeof model.capabilities.vision === "boolean"
+                ? model.capabilities.vision
+                : undefined,
+            pdf:
+              typeof model.capabilities.pdf === "boolean"
+                ? model.capabilities.pdf
+                : undefined,
+          }
+        : undefined,
     });
   }
   return entries;
@@ -491,7 +469,7 @@ async function completeChat({
   extraMessages?: Record<string, unknown>[];
 }): Promise<{ content: string; usage: ChatMessageUsage }> {
   const comboModel = requireModelName(config);
-  const { url, headers } = resolveRequestTarget(config, "chat/completions");
+  const { url, headers } = resolveRequestTarget("chat/completions");
   const { body } = buildChatCompletionBody({
     model: comboModel,
     messages,
@@ -562,7 +540,7 @@ async function* streamChatAttempt({
   extraMessages?: Record<string, unknown>[];
 }): AsyncGenerator<ChatStreamEvent> {
   const comboModel = requireModelName(config);
-  const { url, headers } = resolveRequestTarget(config, "chat/completions");
+  const { url, headers } = resolveRequestTarget("chat/completions");
   const { body } = buildChatCompletionBody({
     model: comboModel,
     messages,

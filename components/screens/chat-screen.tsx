@@ -27,6 +27,7 @@ import {
 import { ModelPickerPanel } from "@/components/chat/model-picker-panel";
 import { TypingIndicator } from "@/components/chat/typing-indicator";
 import { AppLogo } from "@/components/ui/app-logo";
+import { IconButton } from "@/components/ui/icon-button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ThemeToggleButton } from "@/components/ui/theme-toggle-button";
 import type { AppConfig } from "@/lib/core/config/app-config";
@@ -35,10 +36,12 @@ import {
   type WebToolsConfig,
 } from "@/lib/core/config/web-tools-config";
 import {
+  attachmentUnsupportedBy,
   comboEntriesOnly,
   comboIdsFromEntries,
   getModelDisplayName,
   resolveModelSelection,
+  type ModelEntry,
 } from "@/lib/core/config/model-label";
 import { toastMessageForApiError } from "@/lib/core/copy/api-error-message";
 import { getAppCopy } from "@/lib/core/copy/app-copy";
@@ -60,6 +63,7 @@ import {
 import { prepareImageAttachment } from "@/lib/services/image-attachment-service";
 import {
   DOCUMENT_FILE_ACCEPT,
+  isPdfDocument,
   prepareDocumentAttachment,
 } from "@/lib/services/document-attachment-service";
 import { fetchModelEntries, streamChat } from "@/lib/services/chat-service";
@@ -114,6 +118,7 @@ export function ChatScreen({
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [pendingDocument, setPendingDocument] =
     useState<PendingDocument | null>(null);
+  const [modelEntries, setModelEntries] = useState<ModelEntry[]>([]);
   const [attachingImage, setAttachingImage] = useState(false);
   const [attachingDocument, setAttachingDocument] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -224,6 +229,8 @@ export function ChatScreen({
           return;
         }
 
+        setModelEntries(entries);
+
         const combos = comboEntriesOnly(entries);
         const pool = combos.length > 0 ? combos : entries;
         const modelIds = pool.map((entry) => entry.id);
@@ -251,7 +258,7 @@ export function ChatScreen({
     };
     // Re-resolve when API endpoint changes or model is missing/stale on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- modelName read via setConfig
-  }, [config.apiBaseUrl, config.apiKey]);
+  }, [config.apiBaseUrl]);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -282,6 +289,21 @@ export function ChatScreen({
   }, [modelPickerOpen]);
 
   const hasComposerPreview = Boolean(pendingImage || pendingDocument);
+
+  // Best-effort hint — the catalog capability is per combo, not per actual
+  // routed model, so this only fires on an explicit "false", never a guess.
+  const currentModelEntry = modelEntries.find(
+    (entry) => entry.id === config.modelName,
+  );
+  const attachmentWarning = pendingImage
+    ? attachmentUnsupportedBy(currentModelEntry, "image")
+      ? copy.chat_screen_input_header.attachment_warning_image
+      : null
+    : pendingDocument && isPdfDocument(pendingDocument.fileName)
+      ? attachmentUnsupportedBy(currentModelEntry, "pdf")
+        ? copy.chat_screen_input_header.attachment_warning_pdf
+        : null
+      : null;
 
   // Image/PDF previews grow the composer — keep messages pinned to the bottom.
   useLayoutEffect(() => {
@@ -351,7 +373,7 @@ export function ChatScreen({
     };
     // Only re-probe when credentials change; model/name edits don't affect reachability.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.apiBaseUrl, config.apiKey]);
+  }, [config.apiBaseUrl]);
 
   useEffect(() => {
     if (!showEmptyState) {
@@ -429,6 +451,7 @@ export function ChatScreen({
 
       const abortController = new AbortController();
       abortRef.current = abortController;
+      let produced = false;
 
       try {
         for await (const event of streamChat({
@@ -458,6 +481,7 @@ export function ChatScreen({
             continue;
           }
 
+          produced = true;
           setMessages((current) => {
             if (sessionEpochRef.current !== epoch) {
               return current;
@@ -500,17 +524,22 @@ export function ChatScreen({
           setErrorMessage(toastMessageForApiError(apiError.kind));
         }
 
-        setMessages((current) => {
-          if (sessionEpochRef.current !== epoch) {
-            return current;
-          }
+        // Only drop the empty placeholder when nothing streamed in yet — a
+        // Stop click (or any error) after tokens arrived keeps the partial
+        // answer instead of throwing away what the user already saw.
+        if (!produced) {
+          setMessages((current) => {
+            if (sessionEpochRef.current !== epoch) {
+              return current;
+            }
 
-          const cleaned = current.filter(
-            (message) => message.id !== assistantId,
-          );
-          messagesRef.current = cleaned;
-          return cleaned;
-        });
+            const cleaned = current.filter(
+              (message) => message.id !== assistantId,
+            );
+            messagesRef.current = cleaned;
+            return cleaned;
+          });
+        }
       } finally {
         if (sessionEpochRef.current !== epoch) {
           return;
@@ -794,28 +823,28 @@ export function ChatScreen({
         aria-label={copy.chat_history_sidebar.title}
       >
         <header className="flex shrink-0 items-center gap-1.5 border-b border-border-subtle pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-2 pl-[max(var(--content-inset),env(safe-area-inset-left,0px))] pr-[max(var(--content-inset),env(safe-area-inset-right,0px))] md:hidden">
-          <button
-            type="button"
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text-primary active:bg-surface-raised"
+          <IconButton
+            size="responsive"
+            className="active:bg-surface-raised"
             onClick={() => setHistoryOpen(true)}
             aria-label={copy.chat_history_sidebar.title}
           >
             <Menu className="size-5" />
-          </button>
+          </IconButton>
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <AppLogo size={28} className="shrink-0 rounded-full" />
             <span className="font-display truncate text-token-body font-extrabold tracking-tight text-text-primary">
               Minorum
             </span>
           </div>
-          <button
-            type="button"
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text-primary active:bg-surface-raised"
+          <IconButton
+            size="responsive"
+            className="active:bg-surface-raised"
             onClick={handleNewChat}
             aria-label={copy.chat_history_sidebar.new_chat}
           >
             <Plus className="size-5" />
-          </button>
+          </IconButton>
           <ThemeToggleButton className="size-11 shrink-0" />
         </header>
 
@@ -926,9 +955,9 @@ export function ChatScreen({
                     disabled={composerLocked || attaching}
                     onChange={(event) => void handleDocumentSelect(event)}
                   />
-                  <button
-                    type="button"
-                    className="inline-flex size-[var(--composer-icon-size)] items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text-primary disabled:opacity-40"
+                  <IconButton
+                    size="composer"
+                    className="disabled:opacity-40"
                     disabled={composerLocked || attaching}
                     onClick={() => {
                       if (composerLocked || attaching) {
@@ -939,10 +968,10 @@ export function ChatScreen({
                     aria-label={copy.chat_screen_input_header.attach_image}
                   >
                     <ImageIcon className="size-[var(--icon-size)]" />
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex size-[var(--composer-icon-size)] items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text-primary disabled:opacity-40"
+                  </IconButton>
+                  <IconButton
+                    size="composer"
+                    className="disabled:opacity-40"
                     disabled={composerLocked || attaching}
                     onClick={() => {
                       if (composerLocked || attaching) {
@@ -953,7 +982,7 @@ export function ChatScreen({
                     aria-label={copy.chat_screen_input_header.attach_document}
                   >
                     <FileText className="size-[var(--icon-size)]" />
-                  </button>
+                  </IconButton>
                 </div>
               </div>
 
@@ -976,6 +1005,15 @@ export function ChatScreen({
                   </div>
                 ) : null}
 
+                {attachmentWarning ? (
+                  <p
+                    role="status"
+                    className="px-composer pt-composer text-token-label text-warning"
+                  >
+                    {attachmentWarning}
+                  </p>
+                ) : null}
+
                 <div className="flex items-end gap-3 px-composer py-composer">
                   <textarea
                     ref={textareaRef}
@@ -989,7 +1027,7 @@ export function ChatScreen({
                     placeholder={copy.chat_screen_input_header.placeholder}
                     aria-label={copy.chat_screen_input_header.placeholder}
                     disabled={composerLocked}
-                    className="composer-textarea min-h-[var(--composer-icon-size)] flex-1 resize-none rounded-token-sm bg-transparent px-0 py-[7px] text-base leading-[1.5] outline-none focus-visible:outline-2 focus-visible:outline-focus-ring placeholder:text-text-muted disabled:opacity-50 md:text-token-body"
+                    className="composer-textarea min-h-[var(--composer-icon-size)] flex-1 resize-none rounded-token-sm bg-transparent px-0 py-[7px] text-base leading-[1.5] outline-none focus-visible:outline-2 focus-visible:outline-focus-ring placeholder:text-text-muted disabled:opacity-40 md:text-token-body"
                   />
                   {streaming ? (
                     <button

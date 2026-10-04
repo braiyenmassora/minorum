@@ -98,7 +98,6 @@ export async function GET(request: NextRequest) {
     ok: true,
     config: {
       apiBaseUrl: defaults.apiBaseUrl,
-      apiKey: defaults.apiKey,
       preferredModel: defaults.preferredModel,
     },
     webTools: readWebToolsConfigFromEnv(),
@@ -149,7 +148,6 @@ export async function POST(request: Request) {
     ok: true,
     config: {
       apiBaseUrl: defaults.apiBaseUrl,
-      apiKey: defaults.apiKey,
       modelName,
     },
     webTools: readWebToolsConfigFromEnv(),

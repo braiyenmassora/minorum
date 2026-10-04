@@ -29,7 +29,8 @@ const buttonVariants = cva(
         icon: "size-control-compact",
         "icon-xs":
           "size-control-2xs rounded-token-md in-data-[slot=button-group]:rounded-token [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-control-xs rounded-token-md in-data-[slot=button-group]:rounded-token",
+        "icon-sm":
+          "size-control-xs rounded-token-md in-data-[slot=button-group]:rounded-token",
         "icon-lg": "size-control-medium",
       },
     },

@@ -296,10 +296,11 @@
   <script>
     const STORAGE = {
       apiBaseUrl: "api_base_url",
-      apiKey: "api_key",
       modelName: "model_name",
       fullName: "full_name",
     };
+    // Pre-fix builds stored the real API key client-side — wipe any leftover.
+    localStorage.removeItem("api_key");
 
     const form = document.getElementById("gate");
     const fullName = document.getElementById("full-name");
@@ -374,13 +375,12 @@
         }
 
         const config = payload.config || {};
-        if (!config.apiBaseUrl || !config.apiKey) {
+        if (!config.apiBaseUrl) {
           error.textContent = "Server API config missing";
           return;
         }
 
         localStorage.setItem(STORAGE.apiBaseUrl, config.apiBaseUrl);
-        localStorage.setItem(STORAGE.apiKey, config.apiKey);
         localStorage.setItem(
           STORAGE.modelName,
           typeof config.modelName === "string" ? config.modelName : "",
