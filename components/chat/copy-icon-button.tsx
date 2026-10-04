@@ -3,7 +3,7 @@
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
-import { cn } from "@/lib/utils";
+import { IconButton } from "@/components/ui/icon-button";
 
 type CopyIconButtonProps = {
   text: string;
@@ -29,14 +29,11 @@ export function CopyIconButton({
   }
 
   return (
-    <button
-      type="button"
+    <IconButton
+      size="xs"
       onClick={() => void handleCopy()}
       aria-label={label}
-      className={cn(
-        "inline-flex size-control-xs items-center justify-center rounded-token-sm text-text-muted transition-colors hover:bg-surface-raised hover:text-text-primary",
-        className,
-      )}
+      className={className}
     >
       {copied ? (
         <Check className="size-3.5" aria-hidden />
@@ -46,6 +43,6 @@ export function CopyIconButton({
       <span className="sr-only" role="status" aria-live="polite">
         {copied ? "Disalin" : ""}
       </span>
-    </button>
+    </IconButton>
   );
 }

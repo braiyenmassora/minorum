@@ -3,33 +3,15 @@
     "app_name": "Minorum",
     "tagline": "Answers fast. Judges your code a little."
   },
-  "setup_screen": {
-    "title": "Minorum",
-    "subtitle": "Answers fast. Judges your code a little.",
-    "connection_section": "API connection",
-    "profile_section": "Profile",
-    "full_name_label": "Full name",
-    "full_name_hint": "Your full name",
-    "api_url_label": "API URL",
-    "api_url_hint": "https://api.example.com",
-    "api_key_label": "API Key",
-    "api_key_hint": "sk-...",
-    "model_label": "Model",
-    "model_hint": "Select or type a model name",
-    "test_connection": "Test connection",
-    "test_connection_success": "Connection OK!",
-    "save": "Start chat",
-    "show_api_key": "Show",
-    "hide_api_key": "Hide",
-    "cancel": "Cancel"
-  },
   "chat_screen_input_header": {
     "model_prefix": "Model:",
     "new_chat": "New chat",
     "attach_image": "Attach image",
     "attach_document": "Attach file",
     "open_history": "Chats",
-    "placeholder": "Type a message…"
+    "placeholder": "Type a message…",
+    "attachment_warning_image": "This model's catalog entry says it can't read images — it may ignore this one.",
+    "attachment_warning_pdf": "This model's catalog entry says it can't read PDFs — it may ignore this one."
   },
   "chat_history_sidebar": {
     "title": "Minorum",
@@ -38,6 +20,9 @@
     "clear_all_confirm_body": "Every message here, gone for good. Your API config isn't touched.",
     "clear_all_confirm": "Delete all",
     "clear_all_cancel": "Cancel",
+    "delete_confirm_body": "This chat will be deleted for good.",
+    "delete_confirm": "Delete",
+    "delete_cancel": "Cancel",
     "empty": "Nothing here. Yet.",
     "search_placeholder": "Search chats",
     "no_search_results": "Nothing matches that.",

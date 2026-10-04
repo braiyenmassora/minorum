@@ -36,10 +36,27 @@ async function main(): Promise<void> {
     "pdf data url",
   );
   assert(!isTextDocument(preparedPdf.fileName), "pdf not text");
+  assert(isPdfDocument(preparedPdf.fileName), "pdf detected as pdf");
+  const pdfApi = toApiMessageContent([
+    {
+      type: "file_url",
+      file_url: { url: preparedPdf.dataUrl, name: preparedPdf.fileName },
+    },
+  ]);
+  assert(
+    Array.isArray(pdfApi) &&
+      pdfApi[0]?.type === "image_url" &&
+      pdfApi[0].image_url.url === preparedPdf.dataUrl,
+    "pdf sent to the API as image_url (model/combo must support pdf vision to actually read it)",
+  );
 
-  const xlsx = new File([new Uint8Array([0x50, 0x4b, 0x03, 0x04])], "sheet.xlsx", {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  });
+  const xlsx = new File(
+    [new Uint8Array([0x50, 0x4b, 0x03, 0x04])],
+    "sheet.xlsx",
+    {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    },
+  );
   assert(isAcceptedDocumentFile(xlsx), "accepts xlsx");
   const preparedXlsx = await prepareDocumentAttachment(xlsx);
   assert(

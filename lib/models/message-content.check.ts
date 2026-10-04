@@ -7,7 +7,8 @@ function assert(condition: boolean, message: string): asserts condition {
 }
 
 function main(): void {
-  const docxUrl = "data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,UEsDBA==";
+  const docxUrl =
+    "data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,UEsDBA==";
   const api = toApiMessageContent([
     { type: "text", text: "apa ini" },
     {
@@ -18,7 +19,10 @@ function main(): void {
 
   assert(typeof api !== "string", "docx with text → parts array");
   assert(Array.isArray(api) && api.length === 2, "docx keeps user text + stub");
-  assert(api[0].type === "text" && api[0].text === "apa ini", "user text preserved");
+  assert(
+    api[0].type === "text" && api[0].text === "apa ini",
+    "user text preserved",
+  );
   assert(
     api[1].type === "text" &&
       api[1].text.includes("project-brief.docx") &&
@@ -29,7 +33,10 @@ function main(): void {
   const pdfApi = toApiMessageContent([
     {
       type: "file_url",
-      file_url: { url: "data:application/pdf;base64,JVBERi0=", name: "doc.pdf" },
+      file_url: {
+        url: "data:application/pdf;base64,JVBERi0=",
+        name: "doc.pdf",
+      },
     },
   ]);
   assert(

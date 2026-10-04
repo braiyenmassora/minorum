@@ -10,6 +10,9 @@ loadAppCopy();
 
 const copy = getAppCopy();
 assert(copy.app_meta.app_name === "Minorum", "app_meta loaded");
-assert(copy.setup_screen.save.length > 0, "setup_screen loaded");
+assert(
+  copy.chat_history_sidebar.title.length > 0,
+  "chat_history_sidebar loaded",
+);
 
 console.log("app-copy checks passed");

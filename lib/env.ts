@@ -59,8 +59,11 @@ export type ApiDefaults = {
 
 export function getApiDefaults(): ApiDefaults | null {
   const env = readServerEnv();
-  const { MINORUM_DEFAULT_API_URL, MINORUM_DEFAULT_API_KEY, MINORUM_DEFAULT_MODEL } =
-    env;
+  const {
+    MINORUM_DEFAULT_API_URL,
+    MINORUM_DEFAULT_API_KEY,
+    MINORUM_DEFAULT_MODEL,
+  } = env;
 
   if (!MINORUM_DEFAULT_API_URL || !MINORUM_DEFAULT_API_KEY) {
     console.error(

@@ -1,3 +1,9 @@
+/**
+ * Despite the filename, this talks to Postgres via /api/sessions, not
+ * localStorage — chat history is server-side so it follows the user across
+ * devices. See lib/services/config-storage-service.ts for the (actual)
+ * localStorage-backed config.
+ */
 import type { ChatSession } from "@/lib/models/chat-session";
 import type { Message } from "@/lib/models/message";
 

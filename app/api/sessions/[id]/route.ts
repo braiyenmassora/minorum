@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { hasGateCookie } from "@/lib/core/auth/gate-cookie";
+import { isProduction } from "@/lib/env";
 import { titleFromMessages } from "@/lib/models/chat-session";
 import type { Message } from "@/lib/models/message";
 import {
@@ -13,7 +15,18 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(_request: NextRequest, context: RouteContext) {
+async function isAuthorized(request: NextRequest): Promise<boolean> {
+  if (!isProduction()) {
+    return true;
+  }
+  return hasGateCookie(request);
+}
+
+export async function GET(request: NextRequest, context: RouteContext) {
+  if (!(await isAuthorized(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   try {
     const session = await getSession(id);
@@ -22,11 +35,18 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     }
     return NextResponse.json({ session });
   } catch {
-    return NextResponse.json({ error: "Failed to load session" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to load session" },
+      { status: 500 },
+    );
   }
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
+  if (!(await isAuthorized(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   let messages: Message[];
   try {
@@ -51,11 +71,18 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     });
     return NextResponse.json({ session });
   } catch {
-    return NextResponse.json({ error: "Failed to save session" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to save session" },
+      { status: 500 },
+    );
   }
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
+  if (!(await isAuthorized(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   let pinned: boolean;
   try {
@@ -75,16 +102,26 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
     return NextResponse.json({ session });
   } catch {
-    return NextResponse.json({ error: "Failed to update session" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update session" },
+      { status: 500 },
+    );
   }
 }
 
-export async function DELETE(_request: NextRequest, context: RouteContext) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  if (!(await isAuthorized(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   try {
     await deleteSession(id);
     return NextResponse.json({ ok: true });
   } catch {
-    return NextResponse.json({ error: "Failed to delete session" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete session" },
+      { status: 500 },
+    );
   }
 }

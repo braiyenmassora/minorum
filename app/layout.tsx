@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Fira_Code, Geist, IBM_Plex_Sans } from "next/font/google";
 import { MobileViewportSync } from "@/components/mobile-viewport-sync";
 import { AppToastHost } from "@/components/ui/app-toast";
+import {
+  DARK_THEME_COLOR,
+  LIGHT_THEME_COLOR,
+} from "@/lib/core/themes/theme-color";
 import "./globals.css";
 
 /** Body UI — IBM Plex Sans. */
@@ -42,7 +46,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   // Pinch zoom left enabled for accessibility (no maximumScale / userScalable lock).
   viewportFit: "cover",
-  themeColor: "#0f0f0f",
+  themeColor: DARK_THEME_COLOR,
   // Android Chrome: shrink layout when keyboard opens
   interactiveWidget: "resizes-content",
 };
@@ -61,7 +65,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var k="minorum_theme";var t=localStorage.getItem(k);if(t!=="light"&&t!=="dark"){t="dark";localStorage.setItem(k,t);}var el=document.documentElement;var dark=t!=="light";if(dark){el.classList.add("dark");el.style.colorScheme="dark";}else{el.classList.remove("dark");el.style.colorScheme="light";}var c=dark?"#0f0f0f":"#f5f5f5";var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}m.setAttribute("content",c);}catch(e){document.documentElement.classList.add("dark");}})();`,
+            __html: `(function(){try{var k="minorum_theme";var t=localStorage.getItem(k);if(t!=="light"&&t!=="dark"){t="dark";localStorage.setItem(k,t);}var el=document.documentElement;var dark=t!=="light";if(dark){el.classList.add("dark");el.style.colorScheme="dark";}else{el.classList.remove("dark");el.style.colorScheme="light";}var c=dark?"${DARK_THEME_COLOR}":"${LIGHT_THEME_COLOR}";var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}m.setAttribute("content",c);}catch(e){document.documentElement.classList.add("dark");}})();`,
           }}
         />
       </head>

@@ -1,11 +1,11 @@
 import {
+  attachmentUnsupportedBy,
   comboEntriesOnly,
   getModelDisplayName,
   getProviderCategory,
   groupModelsForPicker,
   pickDefaultModel,
   resolveModelSelection,
-  sortModelsForDisplay,
 } from "./model-label";
 
 function assert(condition: boolean, message: string): void {
@@ -45,14 +45,6 @@ assert(
 );
 
 assert(
-  sortModelsForDisplay(
-    ["openai/gpt-4o", "DealWithSign", "z/model"],
-    ["DealWithSign"],
-  ).join(",") === "DealWithSign,openai/gpt-4o,z/model",
-  "combos first",
-);
-
-assert(
   getProviderCategory({ id: "DealWithSign", ownedBy: "combo" }) === "Combo",
   "combo category",
 );
@@ -83,6 +75,23 @@ assert(
 assert(
   groupModelsForPicker(onlyCombos).length === 1,
   "filtered picker is one Combo group",
+);
+
+assert(
+  attachmentUnsupportedBy({ id: "free", capabilities: { pdf: false } }, "pdf"),
+  "warns when catalog explicitly says pdf unsupported",
+);
+assert(
+  !attachmentUnsupportedBy({ id: "best", capabilities: { pdf: true } }, "pdf"),
+  "no warning when capability is explicitly supported",
+);
+assert(
+  !attachmentUnsupportedBy({ id: "unknown/model" }, "image"),
+  "no warning when capabilities are missing entirely (unknown, not false)",
+);
+assert(
+  !attachmentUnsupportedBy(undefined, "image"),
+  "no warning when the model isn't in the fetched catalog at all",
 );
 
 console.log("model-label checks passed");

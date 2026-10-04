@@ -12,14 +12,7 @@ export function isLocalHost(host: string): boolean {
 /** Production hostnames from `MINORUM_ALLOWED_HOSTS` (comma-separated). */
 export function getProductionHosts(): Set<string> {
   const raw = process.env.MINORUM_ALLOWED_HOSTS?.trim();
-  return new Set(
-    raw
-      ? raw
-          .split(",")
-          .map(normalizeHost)
-          .filter(Boolean)
-      : [],
-  );
+  return new Set(raw ? raw.split(",").map(normalizeHost).filter(Boolean) : []);
 }
 
 export function isAllowedProductionHost(host: string): boolean {

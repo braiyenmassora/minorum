@@ -2,6 +2,11 @@
 
 import { useEffect } from "react";
 
+import {
+  DARK_THEME_COLOR,
+  LIGHT_THEME_COLOR,
+} from "@/lib/core/themes/theme-color";
+
 /**
  * Keeps the shell height in sync with the visible viewport on iOS/Android
  * so the composer stays above the soft keyboard / home indicator.
@@ -18,7 +23,7 @@ export function MobileViewportSync() {
 
     const syncThemeColor = () => {
       const dark = root.classList.contains("dark");
-      const color = dark ? "#0f0f0f" : "#f5f5f5";
+      const color = dark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR;
       let meta = document.querySelector('meta[name="theme-color"]');
       if (!meta) {
         meta = document.createElement("meta");

@@ -1,6 +1,10 @@
+/**
+ * Client-side config only — never carries the API key. The key stays
+ * server-only (lib/env.ts) and is injected by /api/proxy; the browser only
+ * needs the base URL for display and the chosen model name.
+ */
 export type AppConfig = {
   apiBaseUrl: string;
-  apiKey: string;
   modelName: string;
   fullName: string;
 };
@@ -19,31 +23,17 @@ export function normalizeApiBaseUrl(raw: string): string {
   return `${withoutTrailingSlash}/v1`;
 }
 
-export function buildModelsUrl(baseUrl: string): string {
-  return `${normalizeApiBaseUrl(baseUrl)}/models`;
-}
-
-export function buildChatCompletionsUrl(baseUrl: string): string {
-  return `${normalizeApiBaseUrl(baseUrl)}/chat/completions`;
-}
-
-export function buildAudioSpeechUrl(baseUrl: string): string {
-  return `${normalizeApiBaseUrl(baseUrl)}/audio/speech`;
-}
-
 export function validateAppConfig(input: Partial<AppConfig>): AppConfig {
   const apiBaseUrl = input.apiBaseUrl?.trim() ?? "";
-  const apiKey = input.apiKey?.trim() ?? "";
   const modelName = input.modelName?.trim() ?? "";
   const fullName = input.fullName?.trim() ?? "";
 
-  if (!apiBaseUrl || !apiKey) {
+  if (!apiBaseUrl) {
     throw new Error("Config belum lengkap");
   }
 
   return {
     apiBaseUrl: normalizeApiBaseUrl(apiBaseUrl),
-    apiKey,
     modelName,
     fullName,
   };

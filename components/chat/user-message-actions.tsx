@@ -1,8 +1,8 @@
 import { RotateCcw } from "lucide-react";
 
 import { CopyIconButton } from "@/components/chat/copy-icon-button";
+import { IconButton } from "@/components/ui/icon-button";
 import { getAppCopy } from "@/lib/core/copy/app-copy";
-import { cn } from "@/lib/utils";
 
 type UserMessageActionsProps = {
   text: string;
@@ -20,18 +20,15 @@ export function UserMessageActions({
   return (
     <div className="mt-1 flex items-center justify-end gap-stack-sm">
       {text.trim() ? <CopyIconButton text={text} label={copy.copy} /> : null}
-      <button
-        type="button"
+      <IconButton
+        size="xs"
         onClick={onRetry}
         disabled={disabled}
         aria-label={copy.retry}
-        className={cn(
-          "inline-flex size-control-xs items-center justify-center rounded-token-sm text-text-muted transition-colors",
-          "hover:bg-surface-raised hover:text-text-primary disabled:pointer-events-none disabled:opacity-40",
-        )}
+        className="disabled:pointer-events-none disabled:opacity-40"
       >
         <RotateCcw className="size-3.5" aria-hidden />
-      </button>
+      </IconButton>
     </div>
   );
 }

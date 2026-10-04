@@ -13,7 +13,10 @@ function main(): void {
   });
 
   publishToast("  hello toast  ");
-  assert(seen.length === 1 && seen[0] === "hello toast", "delivers trimmed message");
+  assert(
+    seen.length === 1 && seen[0] === "hello toast",
+    "delivers trimmed message",
+  );
 
   unsubscribe();
   publishToast("after unsubscribe");
