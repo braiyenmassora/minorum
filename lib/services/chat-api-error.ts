@@ -36,7 +36,10 @@ export function classifyHttpStatus(status: number): ChatApiErrorKind {
   if (status === 413) {
     return "payload_too_large";
   }
-  if (status >= 500) {
+  // 410: the routed model was retired upstream (9Router combo routing can
+  // land on a dead entry) — not a client mistake, and retrying usually
+  // reroutes to a live model, so treat it like a transient server error.
+  if (status === 410 || status >= 500) {
     return "server";
   }
   return "unknown";
