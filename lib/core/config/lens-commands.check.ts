@@ -7,8 +7,8 @@ function assert(condition: boolean, message: string): void {
 }
 
 assert(
-  LENS_COMMANDS.length === 5,
-  "five commands defined (no /auto — it's a no-op, same as typing nothing)",
+  LENS_COMMANDS.length === 3,
+  "three commands — engineer (absorbs data), cto (absorbs architect), research",
 );
 
 assert(parseLensCommand("/engineer") === "engineer", "bare command");
@@ -17,10 +17,18 @@ assert(
   "command with trailing question",
 );
 assert(
-  parseLensCommand("  /architect  desain ulang ini") === "architect",
+  parseLensCommand("  /cto  should we build or buy this") === "cto",
   "leading whitespace tolerated",
 );
-assert(parseLensCommand("/ARCHITECT caps") === "architect", "case-insensitive");
+assert(parseLensCommand("/CTO caps") === "cto", "case-insensitive");
+assert(
+  parseLensCommand("/architect redesign this") === undefined,
+  "/architect was merged into /cto — no longer recognized",
+);
+assert(
+  parseLensCommand("/data model this") === undefined,
+  "/data was merged into /engineer — no longer recognized",
+);
 assert(
   parseLensCommand("/auto") === undefined,
   "/auto is gone — unrecognized, falls through as plain text",

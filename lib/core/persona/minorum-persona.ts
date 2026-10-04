@@ -8,12 +8,11 @@ export type SystemPromptOptions = {
   lens?: LensCommand;
 };
 
-/** Which persona section each lens command should stay inside. */
+/** Which persona section(s) each lens command should stay inside. */
 const LENS_SECTION_TITLE: Record<LensCommand, string> = {
-  engineer: "Role lenses → Engineer, and Coding",
-  architect: "Software architecture",
-  data: "Data architecture",
-  cto: "Technology leadership",
+  engineer:
+    "Role lenses → Engineer, Coding, Data engineering, and the hands-on parts of Data architecture",
+  cto: "Software architecture, Technology leadership, and the platform/strategy parts of Data architecture",
   research: "Research",
 };
 
@@ -63,9 +62,8 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
         roleLenses.rule,
         "",
         `- Engineer: ${roleLenses.engineer}`,
-        `- Software Architect: ${roleLenses.softwareArchitect}`,
-        `- Data Architect: ${roleLenses.dataArchitect}`,
         `- CTO: ${roleLenses.cto}`,
+        `- Research: ${roleLenses.research}`,
       ].join("\n"),
     ),
     "",
@@ -74,7 +72,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
           section(
             "LENS LOCK (this message only)",
             [
-              `The user explicitly locked this message to the ${lens} lens via /${lens}.`,
+              `The user explicitly locked this message to the ${lens} lens (via /${lens} or the lens pill).`,
               `Stay inside "${LENS_SECTION_TITLE[lens]}" below — don't drift into the other lenses unless truly unavoidable to answer correctly.`,
               `Before answering: confirm in ONE short line, in your usual voice, that you're in that mode (e.g. "Oke, mode engineer. Lempar masalahnya." / "Alright, engineer mode — hit me."), then answer.`,
             ].join("\n"),
