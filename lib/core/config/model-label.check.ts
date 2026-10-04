@@ -33,12 +33,9 @@ assert(
 );
 
 assert(
-  resolveModelSelection(
-    "stale/id",
-    ["flex", "openai/gpt-4o"],
+  resolveModelSelection("stale/id", ["flex", "openai/gpt-4o"], "flex", [
     "flex",
-    ["flex"],
-  ) === "flex",
+  ]) === "flex",
   "stale → flex",
 );
 

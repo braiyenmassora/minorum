@@ -19,7 +19,8 @@
     "check:chat-service": "npx tsx lib/services/chat-service.check.ts",
     "check:web-tools": "npx tsx lib/core/config/web-tools-config.check.ts",
     "check:chat-error": "npx tsx lib/services/chat-api-error.check.ts",
-    "check:model-label": "npx tsx lib/core/config/model-label.check.ts"
+    "check:model-label": "npx tsx lib/core/config/model-label.check.ts",
+    "check:lens-commands": "npx tsx lib/core/config/lens-commands.check.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

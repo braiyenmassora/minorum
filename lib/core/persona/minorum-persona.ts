@@ -1,8 +1,20 @@
+import type { LensCommand } from "@/lib/core/config/lens-commands";
 import persona from "@/lib/core/persona/minorum_persona.json";
 
 export type SystemPromptOptions = {
   /** True when web_search tools are attached to this chat request. */
   webToolsActive?: boolean;
+  /** Set when the user's message led with a /command (e.g. /engineer). */
+  lens?: LensCommand;
+};
+
+/** Which persona section each lens command should stay inside. */
+const LENS_SECTION_TITLE: Record<LensCommand, string> = {
+  engineer: "Role lenses → Engineer, and Coding",
+  architect: "Software architecture",
+  data: "Data architecture",
+  cto: "Technology leadership",
+  research: "Research",
 };
 
 function bulletList(items: string[]): string {
@@ -21,37 +33,55 @@ function entries(record: Record<string, string>): string {
 
 export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
   const webToolsActive = options.webToolsActive ?? false;
-  const lang = persona.communication.language;
-  const mix = persona.communication.englishMix;
-  const domains = persona.knowledgeDomains;
+  const lens = options.lens;
+  const roleLenses = persona.identity.roleLenses;
+  const tone = persona.tone;
   const skill = persona.skillLevelDetection;
-  const humor = persona.humor;
-  const formatting = persona.responseFormatting;
-  const tech = persona.technicalCapabilities;
-
-  const webAccessLines = [
-    tech.note,
-    "",
-    `Available in THIS request: ${webToolsActive ? "YES — web_search tool is attached; verify link content before answering." : "NO — do not claim you opened or browsed URLs."}`,
-    `Catalog setting: ${tech.webAccess.available} (${tech.webAccess.condition})`,
-    "",
-    "Behavior:",
-    bulletList(tech.webAccess.behavior),
-    "",
-    `Link output: ${tech.linkOutput.rule}`,
-  ];
+  const coding = persona.coding;
+  const lc = coding.languageConventions;
 
   const parts: string[] = [
     section(
       persona.languageLock.title,
-      [...persona.languageLock.rules, lang.priority, lang.rule].join("\n"),
+      [
+        `Default: ${persona.languageLock.modes.default}`,
+        `Implicit Indonesian: ${persona.languageLock.modes.implicitIndonesian}`,
+        `Explicit Indonesian: ${persona.languageLock.modes.explicitIndonesian}`,
+        "",
+        "Mixing:",
+        bulletList(persona.languageLock.mixing),
+        "",
+        `Never translate: ${persona.languageLock.neverTranslate}`,
+      ].join("\n"),
     ),
     "",
-    `You are ${persona.identity.name}, ${persona.identity.role}. ${persona.identity.mission}`,
-    persona.identity.persona,
+    `You are ${persona.identity.name}. ${persona.identity.role} ${persona.identity.mission}`,
     "",
-    section("Technical capabilities", webAccessLines.join("\n")),
+    section(
+      "Role lenses",
+      [
+        roleLenses.rule,
+        "",
+        `- Engineer: ${roleLenses.engineer}`,
+        `- Software Architect: ${roleLenses.softwareArchitect}`,
+        `- Data Architect: ${roleLenses.dataArchitect}`,
+        `- CTO: ${roleLenses.cto}`,
+      ].join("\n"),
+    ),
     "",
+    ...(lens
+      ? [
+          section(
+            "LENS LOCK (this message only)",
+            [
+              `The user explicitly locked this message to the ${lens} lens via /${lens}.`,
+              `Stay inside "${LENS_SECTION_TITLE[lens]}" below — don't drift into the other lenses unless truly unavoidable to answer correctly.`,
+              `Before answering: confirm in ONE short line, in your usual voice, that you're in that mode (e.g. "Oke, mode engineer. Lempar masalahnya." / "Alright, engineer mode — hit me."), then answer.`,
+            ].join("\n"),
+          ),
+          "",
+        ]
+      : []),
     section(
       "Personality",
       [
@@ -64,36 +94,52 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
     ),
     "",
     section(
-      "Communication",
+      "Tone",
       [
-        `Language priority: ${lang.priority}`,
-        `Rule: ${lang.rule}`,
+        tone.note,
+        `Vibe: ${tone.vibe}`,
         "",
-        "Exceptions:",
-        bulletList(lang.exceptions),
+        `Register (Indonesian): ${tone.register.indonesian}`,
+        `Register (English): ${tone.register.english}`,
         "",
-        "Anti-patterns:",
-        bulletList(lang.antiPattern),
+        `Humor types: ${tone.humor.types.join(", ")}`,
+        `Humor frequency: ${tone.humor.frequency}`,
+        `Absurd analogies: ${tone.humor.absurdAnalogies}`,
+        "Where humor fits:",
+        bulletList(tone.humor.where),
+        "Never (humor):",
+        bulletList(tone.humor.never),
         "",
-        "Tone:",
-        bulletList(persona.communication.tone),
-        "",
-        "English mix:",
-        `- Enabled: ${mix.enabled ? "yes" : "no"}`,
-        `- Style: ${mix.style}`,
-        `- Placement: ${mix.placement}`,
-        `- Avoid: ${mix.avoid}`,
+        `Sarcasm — when: ${tone.sarcasm.when}`,
+        `Sarcasm — intensity: ${tone.sarcasm.intensity}`,
+        "Roast targets:",
+        bulletList(tone.roastTargets),
+        "Never target:",
+        bulletList(tone.neverTarget),
+        `Rule: ${tone.rule}`,
+        `Formatting: ${tone.formatting}`,
       ].join("\n"),
     ),
     "",
     section(
-      "Knowledge domains",
+      "Serious mode",
       [
-        domains.scope,
-        domains.principle,
+        "Triggers:",
+        bulletList(persona.seriousMode.trigger),
         "",
-        "Domain adaptation:",
-        entries(domains.domainAdaptation),
+        `Behavior: ${persona.seriousMode.behavior}`,
+      ].join("\n"),
+    ),
+    "",
+    section(
+      "Tools",
+      [
+        persona.tools.web.rule,
+        `Available in THIS request: ${webToolsActive ? "YES — web_search/web_fetch is attached." : "NO — do not claim you opened or browsed URLs."}`,
+        `Workflow: ${persona.tools.web.workflow}`,
+        "",
+        `Repo access: ${persona.tools.repo}`,
+        `Links: ${persona.tools.links}`,
       ].join("\n"),
     ),
     "",
@@ -109,62 +155,14 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
     ),
     "",
     section(
-      "Source handling",
+      "Mentorship",
       [
-        persona.sourceHandling.principle,
+        persona.mentorship.principle,
         "",
-        "Rules:",
-        bulletList(persona.sourceHandling.rules),
-      ].join("\n"),
-    ),
-    "",
-    section(
-      "Humor",
-      [
-        `Types: ${humor.types.join(", ")}`,
-        `Frequency: ${humor.frequency}`,
-        `Rule: ${humor.rule}`,
+        "Practices:",
+        bulletList(persona.mentorship.practices),
         "",
-        "Triggers:",
-        bulletList(humor.triggers),
-        "",
-        "Never trigger:",
-        bulletList(humor.neverTrigger),
-      ].join("\n"),
-    ),
-    "",
-    section(
-      "Sarcasm",
-      [
-        `Enabled: ${persona.sarcasm.enabled ? "yes" : "no"}`,
-        `Condition: ${persona.sarcasm.condition}`,
-        "",
-        "Rules:",
-        bulletList(persona.sarcasm.rules),
-      ].join("\n"),
-    ),
-    "",
-    section(
-      "Roasting",
-      [
-        persona.roasting.style,
-        "",
-        "Target (OK to roast):",
-        bulletList(persona.roasting.target),
-        "",
-        "Never target:",
-        bulletList(persona.roasting.neverTarget),
-      ].join("\n"),
-    ),
-    "",
-    section(
-      "Safety",
-      [
-        "Refusals:",
-        bulletList(persona.safety.refusals),
-        "",
-        "Controversial topics:",
-        bulletList(persona.safety.controversialTopics),
+        `Teaching mode (opt-in): ${persona.mentorship.teachingMode}`,
       ].join("\n"),
     ),
     "",
@@ -174,94 +172,127 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
         "When answering:",
         bulletList(persona.behavior.answering),
         "",
-        "When ambiguous:",
-        bulletList(persona.behavior.ambiguity),
+        `Ambiguity: ${persona.behavior.ambiguity}`,
         "",
         "Honesty:",
         bulletList(persona.behavior.honesty),
         "",
-        "Mistakes:",
-        bulletList(persona.behavior.mistakes),
+        `Mistakes: ${persona.behavior.mistakes}`,
       ].join("\n"),
     ),
     "",
     section(
-      "Serious mode",
+      "Safety",
       [
-        "Triggers:",
-        bulletList(persona.seriousMode.trigger),
+        "Rules:",
+        bulletList(persona.safety.rules),
         "",
-        "Behavior:",
-        bulletList(persona.seriousMode.behavior),
+        `Controversial topics: ${persona.safety.controversialTopics}`,
+      ].join("\n"),
+    ),
+    "",
+    section(
+      "Knowledge domains",
+      [
+        "Primary:",
+        bulletList(persona.knowledgeDomains.primary),
+        "",
+        `Other topics: ${persona.knowledgeDomains.other}`,
       ].join("\n"),
     ),
     "",
     section(
       "Coding",
       [
-        persona.coding.note,
-        "",
         "Principles:",
-        bulletList(persona.coding.principles),
+        bulletList(coding.principles),
         "",
         "Decision ladder (before writing new code, stop at the first rung that holds):",
-        persona.coding.decisionLadder.note,
-        bulletList(persona.coding.decisionLadder.steps),
-        persona.coding.decisionLadder.neverSkip,
+        coding.decisionLadder.note,
+        bulletList(coding.decisionLadder.steps),
+        coding.decisionLadder.neverSkip,
         "",
-        "Output anti-patterns (MANDATORY — do not do these regardless of what feels natural to complete):",
-        bulletList(persona.coding.outputAntiPattern),
+        "Bug fixing:",
+        bulletList(coding.bugFixing),
         "",
-        "When a bug is found:",
-        bulletList(persona.coding.whenBugFound),
+        "Efficiency:",
+        bulletList(coding.efficiency),
         "",
-        `Skill adaptation: ${persona.coding.skillAdaptation}`,
+        "Output:",
+        bulletList(coding.output),
+        "",
+        "Language conventions:",
+        lc.principle,
+        `Precedence: ${lc.precedence}`,
+        "Comments:",
+        bulletList(lc.comments),
+        `Team's picks where the community is split: ${lc.teamChoices}`,
+      ].join("\n"),
+    ),
+    "",
+    section("Data engineering", bulletList(persona.dataEngineering.principles)),
+    "",
+    section(
+      "Software architecture",
+      [
+        `When this lens applies: ${persona.softwareArchitecture.when}`,
+        "",
+        "Approach:",
+        bulletList(persona.softwareArchitecture.approach),
+        "",
+        persona.softwareArchitecture.output,
+      ].join("\n"),
+    ),
+    "",
+    section(
+      "Data architecture",
+      [
+        `When this lens applies: ${persona.dataArchitecture.when}`,
+        "",
+        "Approach:",
+        bulletList(persona.dataArchitecture.approach),
+      ].join("\n"),
+    ),
+    "",
+    section(
+      "Technology leadership",
+      [
+        `When this lens applies: ${persona.technologyLeadership.when}`,
+        "",
+        "Approach:",
+        bulletList(persona.technologyLeadership.approach),
+        "",
+        persona.technologyLeadership.honesty,
       ].join("\n"),
     ),
     "",
     section(
       "Research",
       [
-        persona.research.note,
-        "",
         "Principles:",
         bulletList(persona.research.principles),
         "",
-        `Citations: ${persona.research.citations.rule}`,
-        `No tool available: ${persona.research.citations.noToolAvailable}`,
-        "",
         "Source priority (highest to lowest):",
-        bulletList(persona.research.sourcePriority.order),
-        `On conflict: ${persona.research.sourcePriority.onConflict}`,
+        bulletList(persona.research.sourcePriority),
+        `On conflict: ${persona.research.onConflict}`,
+        `Citations: ${persona.research.citations}`,
         "",
-        "When asked to research:",
-        bulletList(persona.research.whenAsked),
+        "Source handling:",
+        bulletList(persona.research.sourceHandling),
       ].join("\n"),
     ),
     "",
     section(
       "Response formatting",
       [
-        formatting.principle,
+        persona.responseFormatting.principle,
         "",
-        "Short answers:",
-        `- Trigger: ${formatting.shortAnswers.trigger}`,
-        `- Rule: ${formatting.shortAnswers.rule}`,
+        `Short answers: ${persona.responseFormatting.short}`,
         "",
         "Long answers:",
-        `- Trigger: ${formatting.longAnswers.trigger}`,
-        bulletList(formatting.longAnswers.rules),
+        bulletList(persona.responseFormatting.long),
         "",
-        `Code: ${formatting.code.rule}`,
-        "",
-        "Comparison formatting:",
-        `- Trigger: ${formatting.comparisonFormatting.trigger}`,
-        `- Rule: ${formatting.comparisonFormatting.rule}`,
-        bulletList(formatting.comparisonFormatting.structure),
-        `- Exception: ${formatting.comparisonFormatting.exception}`,
-        "",
-        "Humor exceptions:",
-        bulletList(formatting.humorExceptions),
+        `Comparisons: ${persona.responseFormatting.comparison}`,
       ].join("\n"),
     ),
     "",
