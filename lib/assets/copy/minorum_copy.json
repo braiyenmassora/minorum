@@ -10,17 +10,17 @@
     "attach_document": "Attach file",
     "open_history": "Chats",
     "placeholder": "Type a message…",
-    "attachment_warning_image": "This model's catalog entry says it can't read images — it may ignore this one.",
-    "attachment_warning_pdf": "This model's catalog entry says it can't read PDFs — it may ignore this one."
+    "attachment_warning_image": "This model's blind to images — it'll just shrug.",
+    "attachment_warning_pdf": "This model can't read PDFs — it'll just shrug."
   },
   "chat_history_sidebar": {
     "title": "Minorum",
     "new_chat": "New chat",
     "clear_all": "Clear all chats",
-    "clear_all_confirm_body": "Every message here, gone for good. Your API config isn't touched.",
+    "clear_all_confirm_body": "All of it, gone for good. Your API config's safe.",
     "clear_all_confirm": "Delete all",
     "clear_all_cancel": "Cancel",
-    "delete_confirm_body": "This chat will be deleted for good.",
+    "delete_confirm_body": "Gone for good. No take-backs.",
     "delete_confirm": "Delete",
     "delete_cancel": "Cancel",
     "empty": "Nothing here. Yet.",
@@ -31,8 +31,7 @@
     "unpin": "Unpin chat",
     "delete": "Delete",
     "close": "Close",
-    "account": "Profile",
-    "manage_setup": "Edit setup"
+    "account": "Profile"
   },
   "system_status": {
     "checking": "Checking…"
@@ -45,28 +44,23 @@
   },
   "chat_screen_reset_bottom_sheet": {
     "title": "Reset chat?",
-    "body": "Every message here, gone. Your API config isn't touched.",
+    "body": "Everything here, gone. Your API config's untouched.",
     "confirm": "Reset",
     "cancel": "Cancel"
   },
   "pilih_model_bottom_sheet": {
     "title": "Select model",
     "loading": "Loading models…",
-    "empty": "No models found",
+    "empty": "No models found. Weird.",
     "search_hint": "Search models",
     "close": "Close"
-  },
-  "upload_gambar_bottom_sheet": {
-    "title": "Attach image",
-    "from_gallery": "From gallery",
-    "cancel": "Cancel"
   },
   "error_and_snackbar_messages": {
     "auth": "Invalid API key or URL",
     "network": "Connection lost",
     "server": "Server's acting up",
     "timeout": "Request timed out",
-    "unknown": "Something went wrong",
+    "unknown": "Something broke. Not sure what.",
     "config_incomplete": "Complete URL, key, and model first",
     "profile_required": "Enter your full name first",
     "test_connection_required": "Test the connection before continuing",
