@@ -18,8 +18,19 @@ assert(
       role: "user",
       content: "gimana cara scala baca data dengan spark streaming",
     },
-  ]) === "gimana cara scala baca data…",
-  "title caps at five words",
+  ]) === "gimana cara scala…",
+  "title caps at three words",
+);
+
+assert(
+  titleFromMessages([
+    {
+      id: "3",
+      role: "user",
+      content: "/research Jelasin bedanya REST dan GraphQL",
+    },
+  ]) === "Jelasin bedanya REST…",
+  "leading lens command is dropped from the title",
 );
 
 assert(
@@ -27,9 +38,9 @@ assert(
     {
       id: "2",
       role: "user",
-      content: "how does this work",
+      content: "how it works",
     },
-  ]) === "how does this work",
+  ]) === "how it works",
   "short title unchanged",
 );
 

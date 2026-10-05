@@ -2,7 +2,9 @@ import type { Message } from "@/lib/models/message";
 import { getMessageText } from "@/lib/models/message-content";
 
 export const CHAT_HISTORY_LIMIT = 30;
-const TITLE_MAX_WORDS = 5;
+const TITLE_MAX_WORDS = 3;
+/** Leading lens command (e.g. "/research ") isn't part of the topic. */
+const LEADING_COMMAND_RE = /^\/\w+\s*/;
 
 export type ChatSession = {
   id: string;
@@ -18,7 +20,8 @@ export function titleFromMessages(messages: Message[]): string {
     return "New chat";
   }
 
-  const text = getMessageText(firstUser.content).trim().replace(/\s+/g, " ");
+  const raw = getMessageText(firstUser.content).trim().replace(/\s+/g, " ");
+  const text = raw.replace(LEADING_COMMAND_RE, "") || raw;
   if (!text) {
     return "Image";
   }
