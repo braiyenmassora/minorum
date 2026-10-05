@@ -34,6 +34,9 @@
   --minorum-focus-ring: #a3a3a3;
 
   --minorum-success: #4ade80;
+  --minorum-success-text: var(--minorum-success);
+  /* User bubble is dark in both themes, so its links keep the bright green. */
+  --minorum-link-on-user: #4ade80;
   --minorum-warning: #f5a623;
   --minorum-severe: #fa8c16;
   --minorum-error: #ff4d4f;
@@ -68,6 +71,8 @@
   --color-accent-primary: var(--minorum-accent);
   --color-focus-ring: var(--minorum-focus-ring);
   --color-success: var(--minorum-success);
+  --color-success-text: var(--minorum-success-text);
+  --color-link-on-user: var(--minorum-link-on-user);
   --color-warning: var(--minorum-warning);
   --color-severe: var(--minorum-severe);
   --color-error: var(--minorum-error);
@@ -247,6 +252,8 @@
   --color-assistant-bubble: var(--minorum-assistant-bubble);
   --color-focus-ring: var(--minorum-focus-ring);
   --color-success: var(--minorum-success);
+  --color-success-text: var(--minorum-success-text);
+  --color-link-on-user: var(--minorum-link-on-user);
   --color-warning: var(--minorum-warning);
   --color-severe: var(--minorum-severe);
   --color-error: var(--minorum-error);
@@ -350,6 +357,7 @@ html:not(.dark) {
   --minorum-focus-ring: #525252;
 
   --minorum-success: #16a34a;
+  --minorum-success-text: #166534;
   --minorum-warning: #d98200;
   --minorum-severe: #e06d00;
   --minorum-error: #ea4335;
@@ -676,7 +684,7 @@ html:not(.dark) .scrollbar-soft::-webkit-scrollbar-thumb {
   border-radius: 9999px;
   padding: 0.05em 0.65em 0.05em 0.55em;
   background: var(--color-surface-raised);
-  color: var(--color-text-primary);
+  color: var(--color-success-text);
   text-decoration: none;
   font-size: 0.9em;
   vertical-align: middle;

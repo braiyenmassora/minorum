@@ -36,7 +36,7 @@ export function LensPills({
             title={`${entry.trigger} — ${entry.description}`}
             onClick={() => onSelect(entry.command)}
             className={cn(
-              "shrink-0 rounded-token-sm px-2 py-1 text-token-label font-medium transition-colors disabled:pointer-events-none disabled:opacity-40",
+              "shrink-0 rounded-token-sm px-sm py-xs text-token-label font-medium transition-colors disabled:pointer-events-none disabled:opacity-40",
               active
                 ? "bg-success text-text-on-accent"
                 : "bg-surface-raised text-text-secondary hover:text-text-primary",

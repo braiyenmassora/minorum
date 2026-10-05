@@ -1,3 +1,4 @@
+import type { LensCommand } from "@/lib/core/config/lens-commands";
 import type { ChatMessageUsage } from "@/lib/models/chat-usage";
 
 export type MessageRole = "user" | "assistant";
@@ -20,6 +21,8 @@ export type Message = {
   content: MessageContent;
   /** Set on assistant replies when upstream returns usage / routing metadata. */
   usage?: ChatMessageUsage;
+  /** Lens the assistant reply was generated under (shown as a badge). */
+  lens?: LensCommand;
 };
 
 export type ApiMessage = {
