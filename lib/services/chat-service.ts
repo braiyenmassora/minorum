@@ -13,7 +13,10 @@ import {
   webToolsActiveForRequest,
   webToolsEligible,
 } from "@/lib/core/config/web-tools-config";
-import { buildSystemPrompt } from "@/lib/core/persona/minorum-persona";
+import {
+  buildSystemPrompt,
+  type WebToolsState,
+} from "@/lib/core/persona/minorum-persona";
 import type { ChatMessageUsage, ChatTokenUsage } from "@/lib/models/chat-usage";
 import type { ApiMessage, Message } from "@/lib/models/message";
 import {
@@ -171,7 +174,7 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
  * Slash /command on the latest user turn wins; otherwise fall back to the
  * sticky lens selected via the composer pills.
  */
-function detectLens(messages: Message[], preferred?: LensCommand) {
+export function detectLens(messages: Message[], preferred?: LensCommand) {
   const latest = messages[messages.length - 1];
   if (!latest || latest.role !== "user") {
     return preferred;
@@ -181,14 +184,14 @@ function detectLens(messages: Message[], preferred?: LensCommand) {
 
 function toApiMessages(
   messages: Message[],
-  webToolsActive: boolean,
+  webTools: WebToolsState,
   lens?: LensCommand,
 ): ApiMessage[] {
   const apiMessages: ApiMessage[] = [
     {
       role: "system",
       content: buildSystemPrompt({
-        webToolsActive,
+        webTools,
         lens: detectLens(messages, lens),
       }),
     },
@@ -226,13 +229,21 @@ function buildChatCompletionBody({
   // Fallback path already gathered real search/fetch results into extraMessages
   // before this request, so the persona should treat browsing as available too.
   const webToolsActive = nativeToolsActive || extraMessages.length > 0;
+  // Fallback was offered but the model ran no search — don't let it claim
+  // browsing is unavailable.
+  const fallbackOffered =
+    attachWebTools &&
+    webToolsEligible(model, webToolsConfig) &&
+    resolveWebToolsForModel(model) === null;
+  const webTools: WebToolsState = webToolsActive
+    ? "attached"
+    : fallbackOffered
+      ? "skipped"
+      : "off";
   const body: Record<string, unknown> = {
     model,
     stream,
-    messages: [
-      ...toApiMessages(messages, webToolsActive, lens),
-      ...extraMessages,
-    ],
+    messages: [...toApiMessages(messages, webTools, lens), ...extraMessages],
   };
 
   if (nativeToolsActive) {
@@ -258,6 +269,63 @@ type FallbackToolCall = {
   function: { name: string; arguments: string };
 };
 
+/**
+ * Comma-separated providers are tried in order. An error, a timeout, or a
+ * 200 with nothing useful (no results, empty page text — e.g. JS-rendered
+ * sites) moves on to the next one; the last outcome is returned.
+ */
+async function tryProvidersInOrder({
+  endpoint,
+  providers,
+  body,
+  hasContent,
+  signal,
+}: {
+  endpoint: "search" | "web/fetch";
+  providers: string;
+  body: (model: string) => Record<string, unknown>;
+  hasContent: (data: Record<string, unknown>) => boolean;
+  signal?: AbortSignal;
+}): Promise<string> {
+  const { url, headers } = resolveRequestTarget(endpoint);
+  let lastResult = JSON.stringify({ error: `${endpoint} failed` });
+
+  for (const model of providers
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean)) {
+    try {
+      const response = await fetchWithTimeout(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body(model)),
+        signal,
+        timeoutMs: FALLBACK_TOOL_TIMEOUT_MS,
+      });
+      if (!response.ok) {
+        lastResult = JSON.stringify({
+          error: `${endpoint} failed (${model}: ${response.status})`,
+        });
+        continue;
+      }
+      const data = (await response.json()) as Record<string, unknown>;
+      lastResult = JSON.stringify(data);
+      if (hasContent(data)) {
+        return lastResult;
+      }
+    } catch (error) {
+      if (signal?.aborted) {
+        throw error;
+      }
+      lastResult = JSON.stringify({
+        error: `${endpoint} failed (${model}: unreachable)`,
+      });
+    }
+  }
+
+  return lastResult;
+}
+
 async function executeFallbackTool(
   toolCall: FallbackToolCall,
   webToolsConfig: WebToolsConfig,
@@ -273,57 +341,43 @@ async function executeFallbackTool(
     return JSON.stringify({ error: "Malformed tool arguments" });
   }
 
-  try {
-    if (toolCall.function.name === "web_search") {
-      const query = typeof args.query === "string" ? args.query.trim() : "";
-      if (!query) {
-        return JSON.stringify({ error: "Missing query" });
-      }
-      const maxResults =
-        typeof args.max_results === "number" ? args.max_results : 5;
-      const { url, headers } = resolveRequestTarget("search");
-      const response = await fetchWithTimeout(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          model: webToolsConfig.searchProvider,
-          query,
-          max_results: maxResults,
-        }),
-        signal,
-        timeoutMs: FALLBACK_TOOL_TIMEOUT_MS,
-      });
-      if (!response.ok) {
-        return JSON.stringify({ error: `search failed (${response.status})` });
-      }
-      return JSON.stringify(await response.json());
+  if (toolCall.function.name === "web_search") {
+    const query = typeof args.query === "string" ? args.query.trim() : "";
+    if (!query) {
+      return JSON.stringify({ error: "Missing query" });
     }
+    const maxResults =
+      typeof args.max_results === "number" ? args.max_results : 5;
+    return tryProvidersInOrder({
+      endpoint: "search",
+      providers: webToolsConfig.searchProvider,
+      body: (model) => ({ model, query, max_results: maxResults }),
+      hasContent: (data) =>
+        Array.isArray(data.results) && data.results.length > 0,
+      signal,
+    });
+  }
 
-    if (toolCall.function.name === "web_fetch") {
-      const targetUrl = typeof args.url === "string" ? args.url.trim() : "";
-      if (!targetUrl) {
-        return JSON.stringify({ error: "Missing url" });
-      }
-      const { url, headers } = resolveRequestTarget("web/fetch");
-      const response = await fetchWithTimeout(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          model: webToolsConfig.fetchProvider,
-          url: targetUrl,
-          format: "markdown",
-          max_characters: 8000,
-        }),
-        signal,
-        timeoutMs: FALLBACK_TOOL_TIMEOUT_MS,
-      });
-      if (!response.ok) {
-        return JSON.stringify({ error: `fetch failed (${response.status})` });
-      }
-      return JSON.stringify(await response.json());
+  if (toolCall.function.name === "web_fetch") {
+    const targetUrl = typeof args.url === "string" ? args.url.trim() : "";
+    if (!targetUrl) {
+      return JSON.stringify({ error: "Missing url" });
     }
-  } catch {
-    return JSON.stringify({ error: "Tool execution failed" });
+    return tryProvidersInOrder({
+      endpoint: "web/fetch",
+      providers: webToolsConfig.fetchProvider,
+      body: (model) => ({
+        model,
+        url: targetUrl,
+        format: "markdown",
+        max_characters: 8000,
+      }),
+      hasContent: (data) => {
+        const content = data.content as { text?: string } | undefined;
+        return Boolean(content?.text?.trim());
+      },
+      signal,
+    });
   }
 
   return JSON.stringify({ error: `Unknown tool: ${toolCall.function.name}` });
@@ -351,25 +405,35 @@ async function runFallbackToolLoop({
 }): Promise<Record<string, unknown>[]> {
   const model = requireModelName(config);
   const wire: Record<string, unknown>[] = [
-    ...toApiMessages(messages, true, lens),
+    ...toApiMessages(messages, "attached", lens),
   ];
   const extras: Record<string, unknown>[] = [];
   const { url, headers } = resolveRequestTarget("chat/completions");
+  // Research must be source-backed, so its first round forces a tool call.
+  let forceSearch = detectLens(messages, lens) === "research";
 
   for (let round = 0; round < MAX_FALLBACK_TOOL_ROUNDS; round += 1) {
-    const response = await fetchWithTimeout(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        model,
-        stream: false,
-        messages: wire,
-        tools: FALLBACK_WEB_TOOLS,
-        tool_choice: "auto",
-      }),
-      signal,
-      timeoutMs: 45_000,
-    });
+    const requestRound = (toolChoice: "required" | "auto") =>
+      fetchWithTimeout(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model,
+          stream: false,
+          messages: wire,
+          tools: FALLBACK_WEB_TOOLS,
+          tool_choice: toolChoice,
+        }),
+        signal,
+        timeoutMs: 45_000,
+      });
+
+    let response = await requestRound(forceSearch ? "required" : "auto");
+    // Some models reject a forced tool_choice — retry the round as "auto".
+    if (!response.ok && forceSearch) {
+      response = await requestRound("auto");
+    }
+    forceSearch = false;
 
     if (!response.ok) {
       break;

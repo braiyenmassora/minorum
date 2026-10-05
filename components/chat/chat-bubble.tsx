@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ChatImage } from "@/components/chat/chat-image";
 import { ChatMarkdown } from "@/components/chat/chat-markdown";
 import { ChatMessageActions } from "@/components/chat/chat-message-actions";
+import { LensBadge } from "@/components/chat/lens-badge";
 import { PlainTextWithLinks } from "@/components/chat/plain-text-with-links";
 import { getAppCopy } from "@/lib/core/copy/app-copy";
 import { UserMessageActions } from "@/components/chat/user-message-actions";
@@ -40,7 +41,7 @@ function UserBubbleText({ text }: { text: string }) {
       >
         <PlainTextWithLinks
           text={text}
-          linkClassName="text-text-on-user underline underline-offset-2 opacity-90 hover:opacity-100"
+          linkClassName="text-link-on-user underline underline-offset-2 hover:opacity-80"
         />
       </p>
       {truncatable ? (
@@ -155,6 +156,12 @@ export function ChatBubble({
           </div>
         ) : (
           <div className="w-full min-w-0 text-token-body leading-[var(--chat-markdown-line-height)] text-text-primary">
+            {message.lens ? (
+              <LensBadge
+                lens={message.lens}
+                className="mb-[var(--spacing-sm)]"
+              />
+            ) : null}
             <ChatMarkdown content={text} />
             <ChatMessageActions text={normalizeAssistantMarkdown(text)} />
           </div>

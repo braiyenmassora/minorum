@@ -16,18 +16,18 @@ Open `http://localhost:3000` → first-time setup at `/welcome` (password + name
 
 ## Environment Variables
 
-| Key                                                  | Required   | Description                                                                  |
-| ---------------------------------------------------- | ---------- | ---------------------------------------------------------------------------- |
-| `MINORUM_DEFAULT_API_URL`                            | Always     | Backend base URL (no `/v1` suffix — added server-side)                       |
-| `MINORUM_DEFAULT_API_KEY`                            | Always     | API key injected by the proxy. Never exposed to the browser                  |
-| `MINORUM_DEFAULT_MODEL`                              | Optional   | Default model id used after login                                            |
-| `GATE_PASSWORD`                                      | Always     | Login password. Set locally, never commit                                    |
-| `GATE_SESSION_SECRET`                                | Production | HMAC secret for the session cookie — generate with `openssl rand -base64 32` |
-| `MINORUM_ALLOWED_HOSTS`                              | Production | Comma-separated hostnames allowed to serve the app (e.g. `chat.example.com`) |
-| `DATABASE_URL`                                       | Always     | Postgres (Neon) connection string — chat sessions/pin/search persist here    |
-| `MINORUM_WEB_TOOLS`                                  | Optional   | `1` to enable web_search/web_fetch (native or fallback)                      |
-| `MINORUM_WEB_TOOLS_MODELS`                           | Optional   | Comma-separated model allowlist for web tools; empty = all                   |
-| `MINORUM_SEARCH_PROVIDER` / `MINORUM_FETCH_PROVIDER` | Optional   | 9Router provider/combo id used by the fallback tool loop                     |
+| Key                                                  | Required   | Description                                                                                                                                       |
+| ---------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MINORUM_DEFAULT_API_URL`                            | Always     | Backend base URL (no `/v1` suffix — added server-side)                                                                                            |
+| `MINORUM_DEFAULT_API_KEY`                            | Always     | API key injected by the proxy. Never exposed to the browser                                                                                       |
+| `MINORUM_DEFAULT_MODEL`                              | Optional   | Default model id used after login                                                                                                                 |
+| `GATE_PASSWORD`                                      | Always     | Login password. Set locally, never commit                                                                                                         |
+| `GATE_SESSION_SECRET`                                | Production | HMAC secret for the session cookie — generate with `openssl rand -base64 32`                                                                      |
+| `MINORUM_ALLOWED_HOSTS`                              | Production | Comma-separated hostnames allowed to serve the app (e.g. `chat.example.com`)                                                                      |
+| `DATABASE_URL`                                       | Always     | Postgres (Neon) connection string — chat sessions/pin/search persist here                                                                         |
+| `MINORUM_WEB_TOOLS`                                  | Optional   | `1` to enable web_search/web_fetch (native or fallback)                                                                                           |
+| `MINORUM_WEB_TOOLS_MODELS`                           | Optional   | Comma-separated model allowlist for web tools; empty = all                                                                                        |
+| `MINORUM_SEARCH_PROVIDER` / `MINORUM_FETCH_PROVIDER` | Optional   | 9Router provider/combo id for the fallback tool loop; both accept a comma list tried in order (e.g. `tavily,brave-search` / `jina-reader,tavily`) |
 
 ## Scripts
 

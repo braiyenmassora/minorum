@@ -73,7 +73,11 @@ import {
   isPdfDocument,
   prepareDocumentAttachment,
 } from "@/lib/services/document-attachment-service";
-import { fetchModelEntries, streamChat } from "@/lib/services/chat-service";
+import {
+  detectLens,
+  fetchModelEntries,
+  streamChat,
+} from "@/lib/services/chat-service";
 import { updateConfigModel } from "@/lib/services/config-storage-service";
 import {
   probeSystemStatus,
@@ -476,6 +480,7 @@ export function ChatScreen({
 
       const assistantId = createId();
       const requestMessages = apiHistory ?? history;
+      const replyLens = detectLens(requestMessages, activeLens);
 
       setMessages(history);
       messagesRef.current = history;
@@ -531,6 +536,7 @@ export function ChatScreen({
                     id: assistantId,
                     role: "assistant" as const,
                     content: event.content,
+                    ...(replyLens ? { lens: replyLens } : {}),
                   },
                 ]
               : current.map((message) =>

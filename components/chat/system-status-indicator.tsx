@@ -22,7 +22,7 @@ const DOT_BY_TONE: Record<StatusTone, string> = {
 
 const TEXT_BY_TONE: Record<StatusTone, string> = {
   neutral: "text-text-muted",
-  success: "text-success",
+  success: "text-success-text",
   warning: "text-warning",
   severe: "font-medium text-severe",
   danger: "font-medium text-error",

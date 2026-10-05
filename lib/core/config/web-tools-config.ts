@@ -3,9 +3,9 @@ export type WebToolsConfig = {
   enabled: boolean;
   /** Empty = any model when enabled. Non-empty = allowlist only. */
   modelAllowlist: readonly string[];
-  /** 9Router search provider/combo id used by the fallback tool loop. */
+  /** 9Router search provider/combo id(s); comma-separated = tried in order. */
   searchProvider: string;
-  /** 9Router fetch provider/combo id used by the fallback tool loop. */
+  /** 9Router fetch provider/combo id(s); comma-separated = tried in order. */
   fetchProvider: string;
 };
 
