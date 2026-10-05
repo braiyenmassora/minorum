@@ -1,4 +1,4 @@
-export type LensCommand = "engineer" | "cto" | "research";
+export type LensCommand = "engineer" | "research";
 
 export type LensCommandDefinition = {
   command: LensCommand;
@@ -12,19 +12,13 @@ export const LENS_COMMANDS: readonly LensCommandDefinition[] = [
     command: "engineer",
     trigger: "/engineer",
     label: "engineer",
-    description: "Code + data. Squash. Prove. Ship.",
-  },
-  {
-    command: "cto",
-    trigger: "/cto",
-    label: "cto",
-    description: "Architecture + strategy. Big-picture on.",
+    description: "Code to roadmap. Squash. Design. Ship.",
   },
   {
     command: "research",
     trigger: "/research",
     label: "research",
-    description: "Receipts or bust.",
+    description: "Sources first. Verify. Cite. Decide.",
   },
 ];
 

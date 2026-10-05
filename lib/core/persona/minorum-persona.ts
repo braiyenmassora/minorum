@@ -1,9 +1,23 @@
 import type { LensCommand } from "@/lib/core/config/lens-commands";
 import persona from "@/lib/core/persona/minorum_persona.json";
 
+/**
+ * attached: tools are on the request or their results are already in it.
+ * skipped: browsing is enabled, but no search ran for this message.
+ * off: browsing is not available at all.
+ */
+export type WebToolsState = "attached" | "skipped" | "off";
+
+const WEB_TOOLS_AVAILABILITY: Record<WebToolsState, string> = {
+  attached:
+    "YES — web_search/web_fetch is attached, or its results are already in this conversation.",
+  skipped:
+    "ENABLED, but no search ran for this message — answer from internal knowledge. Don't claim you browsed, and don't say browsing is unavailable; if live info matters, say you didn't search this time and suggest /research.",
+  off: "NO — do not claim you opened or browsed URLs.",
+};
+
 export type SystemPromptOptions = {
-  /** True when web_search tools are attached to this chat request. */
-  webToolsActive?: boolean;
+  webTools?: WebToolsState;
   /** Set when the user's message led with a /command (e.g. /engineer). */
   lens?: LensCommand;
 };
@@ -11,8 +25,7 @@ export type SystemPromptOptions = {
 /** Which persona section(s) each lens command should stay inside. */
 const LENS_SECTION_TITLE: Record<LensCommand, string> = {
   engineer:
-    "Role lenses → Engineer, Coding, Data engineering, and the hands-on parts of Data architecture",
-  cto: "Software architecture, Technology leadership, and the platform/strategy parts of Data architecture",
+    "Role lenses → Engineer, Coding, Data engineering, Software architecture, Data architecture, and Technology leadership",
   research: "Research",
 };
 
@@ -31,7 +44,7 @@ function entries(record: Record<string, string>): string {
 }
 
 export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
-  const webToolsActive = options.webToolsActive ?? false;
+  const webTools = options.webTools ?? "off";
   const lens = options.lens;
   const roleLenses = persona.identity.roleLenses;
   const tone = persona.tone;
@@ -62,7 +75,6 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
         roleLenses.rule,
         "",
         `- Engineer: ${roleLenses.engineer}`,
-        `- CTO: ${roleLenses.cto}`,
         `- Research: ${roleLenses.research}`,
       ].join("\n"),
     ),
@@ -74,7 +86,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
             [
               `The user explicitly locked this message to the ${lens} lens (via /${lens} or the lens pill).`,
               `Stay inside "${LENS_SECTION_TITLE[lens]}" below — don't drift into the other lenses unless truly unavoidable to answer correctly.`,
-              `Before answering: confirm in ONE short line, in your usual voice, that you're in that mode (e.g. "Oke, mode engineer. Lempar masalahnya." / "Alright, engineer mode — hit me."), then answer.`,
+              "Don't announce or confirm the mode in your reply — the app already shows it as a badge. Start answering directly.",
             ].join("\n"),
           ),
           "",
@@ -133,7 +145,7 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
       "Tools",
       [
         persona.tools.web.rule,
-        `Available in THIS request: ${webToolsActive ? "YES — web_search/web_fetch is attached." : "NO — do not claim you opened or browsed URLs."}`,
+        `Available in THIS request: ${WEB_TOOLS_AVAILABILITY[webTools]}`,
         `Workflow: ${persona.tools.web.workflow}`,
         "",
         `Repo access: ${persona.tools.repo}`,
@@ -267,11 +279,16 @@ export function buildSystemPrompt(options: SystemPromptOptions = {}): string {
     section(
       "Research",
       [
+        `Scope: ${persona.research.scope}`,
+        "",
         "Principles:",
         bulletList(persona.research.principles),
         "",
         "Source priority (highest to lowest):",
         bulletList(persona.research.sourcePriority),
+        "Domain notes:",
+        bulletList(persona.research.domainNotes),
+        `High stakes: ${persona.research.highStakes}`,
         `On conflict: ${persona.research.onConflict}`,
         `Citations: ${persona.research.citations}`,
         "",
