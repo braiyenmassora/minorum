@@ -41,7 +41,7 @@ function UserBubbleText({ text }: { text: string }) {
       >
         <PlainTextWithLinks
           text={text}
-          linkClassName="text-link-on-user underline underline-offset-2 hover:opacity-80"
+          linkClassName="font-semibold text-link-on-user underline underline-offset-2 hover:opacity-80"
         />
       </p>
       {truncatable ? (

@@ -19,7 +19,7 @@
   --minorum-surface-raised: #262626;
 
   --minorum-assistant-bubble: #1a1a1a;
-  --minorum-user-bubble: #171717;
+  --minorum-user-bubble: #3a3a3a;
   --minorum-composer: var(--minorum-assistant-bubble);
   --minorum-border: #262626;
   --minorum-border-subtle: #1f1f1f;
@@ -35,7 +35,7 @@
 
   --minorum-success: #4ade80;
   --minorum-success-text: var(--minorum-success);
-  /* User bubble is dark in both themes, so its links keep the bright green. */
+  /* Links inside the user bubble; light mode overrides for its light bubble. */
   --minorum-link-on-user: #4ade80;
   --minorum-warning: #f5a623;
   --minorum-severe: #fa8c16;
@@ -342,7 +342,7 @@ html:not(.dark) {
   --minorum-surface-raised: #ebebeb;
 
   --minorum-assistant-bubble: #ffffff;
-  --minorum-user-bubble: #171717;
+  --minorum-user-bubble: var(--minorum-surface-raised);
   --minorum-composer: var(--minorum-assistant-bubble);
   --minorum-border: #e5e5e5;
   --minorum-border-subtle: #ebebeb;
@@ -351,13 +351,14 @@ html:not(.dark) {
   --minorum-text-secondary: #525252;
   --minorum-text-muted: #737373;
   --minorum-text-on-accent: #ffffff;
-  --minorum-text-on-user: #ffffff;
+  --minorum-text-on-user: var(--minorum-text-primary);
+  --minorum-link-on-user: #166534;
 
   --minorum-accent: #171717;
   --minorum-focus-ring: #525252;
 
   --minorum-success: #16a34a;
-  --minorum-success-text: #166534;
+  --minorum-success-text: #15803d;
   --minorum-warning: #d98200;
   --minorum-severe: #e06d00;
   --minorum-error: #ea4335;
@@ -680,10 +681,14 @@ html:not(.dark) .scrollbar-soft::-webkit-scrollbar-thumb {
   align-items: center;
   gap: 0.3em;
   max-width: 100%;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid color-mix(in oklab, var(--color-success) 35%, transparent);
   border-radius: 9999px;
   padding: 0.05em 0.65em 0.05em 0.55em;
-  background: var(--color-surface-raised);
+  background: color-mix(
+    in oklab,
+    var(--color-success) 10%,
+    var(--color-assistant-bubble)
+  );
   color: var(--color-success-text);
   text-decoration: none;
   font-size: 0.9em;
@@ -692,10 +697,15 @@ html:not(.dark) .scrollbar-soft::-webkit-scrollbar-thumb {
 }
 
 .chat-markdown-link-chip:hover {
-  background: var(--color-assistant-bubble);
+  background: color-mix(
+    in oklab,
+    var(--color-success) 18%,
+    var(--color-assistant-bubble)
+  );
 }
 
 .chat-markdown-link-chip-text {
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
